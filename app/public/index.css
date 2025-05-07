@@ -1,0 +1,49 @@
+
+
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap");
+@import url("https://fonts.cdnfonts.com/css/mona-sans");
+
+body {
+  margin: 0;
+  font-family: "Playfair Display", serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  overflow-x: hidden;
+}
+
+.hero {
+  background-image: url("./assets/heroBg.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+.community-engagement {
+  background-image: url("./assets/largeCommunityBg.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+.project-home {
+  background-image: url("./assets/projectBg.jpeg");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+.res-home {
+  background-image: url("./assets/resourceBg.jpeg");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+.contact-home {
+  background-image: url("./assets/contactBg.jpeg");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+.about-home {
+  background-image: url("./assets/aboutBg.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
