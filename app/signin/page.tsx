@@ -16,9 +16,9 @@ interface CarouselImage {
 
 const LoginPage: React.FC = () => {
   const carouselImages: CarouselImage[] = [
-    { src: "/image/groups.jpg", alt: "Welcome to our platform", caption: "Join our community of professionals" },
-    { src: "/image/technology.jpg", alt: "Learn and Innovate", caption: "Shape your World" },
-    { src: "/image/young.jpg", alt: "Connect and collaborate", caption: "Work together with teams around the world" }
+    { src: "/images/afro.jpg", alt: "Welcome to our platform", caption: "Join our community of professionals" },
+    { src: "/images/businessman.jpg", alt: "Learn and Innovate", caption: "Shape your World" },
+    { src: "/images/office.jpg", alt: "Connect and collaborate", caption: "Work together with teams around the world" }
   ];
 
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -46,7 +46,7 @@ const LoginPage: React.FC = () => {
       await signInWithEmailAndPassword(auth, email, password);
       // Removed email verification check
       console.log('Successfully logged in with email');
-      router.push("/homePage"); // Redirect to home page
+      router.push("/dashboard"); // Redirect to home page
     } catch (error: any) {
       setError(error.message);
     } finally {
@@ -132,13 +132,14 @@ const LoginPage: React.FC = () => {
             </button>
 
             <div className="text-center mb-10">
-              <h1 className="text-3xl text-white font-bold mb-2">ADMIN</h1>
+              <span className="text-7xl text-green-500 font-bold mb-2"> Lera</span>
+              <h1 className="text-3xl text-white font-bold mb-2"> Admin</h1>
               <p className="text-gray-60">Please sign in to your account</p>
             </div>
 
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-            <form onSubmit={handleEmailLogin} className="space-y-6">
+            <form onSubmit={handleEmailLogin} className="space-y-6 text-white">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-white mb-1">
                   Email Address
