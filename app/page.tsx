@@ -39,19 +39,19 @@ export default function AdminWelcomePage() {
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-4">
-              <Link href="/admin/dashboard" className="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400">
+              <Link href="/signin" className="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400">
                 Dashboard
               </Link>
-              <Link href="/admin/campaigns" className="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400">
+              <Link href="/signin" className="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400">
                 Campaigns
               </Link>
-              <Link href="/admin/content" className="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400">
+              <Link href="/signin" className="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400">
                 Content
               </Link>
               <Link href="/" className="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400">
                 View Site
               </Link>
-              <Link href="/blog" className="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400">
+              <Link href="/signin" className="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400">
                 Blog
               </Link>
               <Link href="/signin" className="ml-4 px-4 py-2 border border-green-600 text-green-600 dark:text-green-400 rounded-md hover:bg-green-50 dark:hover:bg-gray-700">
@@ -91,23 +91,23 @@ export default function AdminWelcomePage() {
         {/* Mobile menu */}
         <div className={`${isMenuOpen ? 'block' : 'hidden'} md:hidden bg-white dark:bg-gray-800 shadow-lg`}>
           <div className="px-2 pt-2 pb-3 space-y-1">
-            <Link href="/admin/dashboard" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 rounded-md">
+            <Link href="/signin" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 rounded-md">
               Dashboard
             </Link>
-            <Link href="/admin/campaigns" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 rounded-md">
+            <Link href="/signin" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 rounded-md">
               Campaigns
             </Link>
-            <Link href="/admin/content" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 rounded-md">
+            <Link href="/signin" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 rounded-md">
               Content
             </Link>
             <Link href="/" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 rounded-md">
               View Site
             </Link>
-            <Link href="/blog" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 rounded-md">
+            <Link href="/signin" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 rounded-md">
               Blog
             </Link>
-            <Link href="/logout" className="block px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-              Sign Out
+            <Link href="/signin" className="block px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+              Login
             </Link>
           </div>
         </div>
@@ -124,10 +124,10 @@ export default function AdminWelcomePage() {
             Your central command center for managing all communications, campaigns, and content across your organization.
           </p>
           <div className="flex flex-wrap gap-4 pt-4">
-            <Link href="/admin/dashboard" className="px-6 py-3 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 transition duration-200">
+            <Link href="/signin" className="px-6 py-3 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 transition duration-200">
               Go to Dashboard
             </Link>
-            <Link href="/admin/campaigns/new" className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-200">
+            <Link href="/signin" className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-200">
               Create Campaign
             </Link>
           </div>
@@ -164,25 +164,25 @@ export default function AdminWelcomePage() {
                   icon={<Megaphone size={20} />}
                   title="Campaigns"
                   description="Manage your active campaigns"
-                  href="/admin/campaigns"
+                  href="/signin"
                 />
                 <AdminQuickLink 
                   icon={<FileText size={20} />}
                   title="Content"
                   description="Edit website and blog content"
-                  href="/admin/content"
+                  href="/signin"
                 />
                 <AdminQuickLink 
                   icon={<MessageSquare size={20} />}
                   title="Messages"
                   description="View and respond to inquiries"
-                  href="/admin/messages"
+                  href="/signin"
                 />
                 <AdminQuickLink 
                   icon={<BarChart3 size={20} />}
                   title="Analytics"
                   description="Track performance metrics"
-                  href="/admin/analytics"
+                  href="/asignin"
                 />
               </div>
               
@@ -208,7 +208,7 @@ export default function AdminWelcomePage() {
                 </div>
                 
                 <div className="mt-4 text-right">
-                  <Link href="/admin/activity" className="inline-flex items-center text-green-600 dark:text-green-400 hover:underline">
+                  <Link href="/signin" className="inline-flex items-center text-green-600 dark:text-green-400 hover:underline">
                     <span>View all activity</span>
                     <ArrowRight size={16} className="ml-1" />
                   </Link>
@@ -227,16 +227,16 @@ export default function AdminWelcomePage() {
               <span className="text-gray-700 dark:text-gray-300">© 2025 CommsHub. All rights reserved.</span>
             </div>
             <div className="flex space-x-4">
-              <Link href="/help" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
+              <Link href="/signin" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
                 Help Center
               </Link>
-              <Link href="/admin/settings" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
+              <Link href="/signin" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
                 Settings
               </Link>
               <Link href="/" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
                 Public Site
               </Link>
-              <Link href="/blog" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
+              <Link href="/signin" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
                 Blog
               </Link>
             </div>
