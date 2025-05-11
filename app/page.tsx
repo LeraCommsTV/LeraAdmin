@@ -100,7 +100,7 @@ export default function AdminWelcomePage() {
             <Link href="/signin" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 rounded-md">
               Content
             </Link>
-            <Link href="/" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 rounded-md">
+            <Link href="/signin" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 rounded-md">
               View Site
             </Link>
             <Link href="/signin" className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 rounded-md">
@@ -182,7 +182,7 @@ export default function AdminWelcomePage() {
                   icon={<BarChart3 size={20} />}
                   title="Analytics"
                   description="Track performance metrics"
-                  href="/asignin"
+                  href="/signin"
                 />
               </div>
               
@@ -233,7 +233,7 @@ export default function AdminWelcomePage() {
               <Link href="/signin" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
                 Settings
               </Link>
-              <Link href="/" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
+              <Link href="/signin" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
                 Public Site
               </Link>
               <Link href="/signin" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">

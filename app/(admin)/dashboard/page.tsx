@@ -139,12 +139,7 @@ export default function DashboardPage() {
             >
               Overview
             </button>
-            <button 
-              onClick={() => setActiveTab('campaigns')}
-              className={`px-4 py-2 text-sm font-medium ${activeTab === 'campaigns' ? 'text-green-600 dark:text-green-400 border-b-2 border-green-600 dark:border-green-400' : 'text-gray-500 dark:text-gray-400'}`}
-            >
-              Campaigns
-            </button>
+  
             <button 
               onClick={() => setActiveTab('content')}
               className={`px-4 py-2 text-sm font-medium ${activeTab === 'content' ? 'text-green-600 dark:text-green-400 border-b-2 border-green-600 dark:border-green-400' : 'text-gray-500 dark:text-gray-400'}`}
