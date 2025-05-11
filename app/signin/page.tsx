@@ -132,9 +132,9 @@ const LoginPage: React.FC = () => {
             </button>
 
             <div className="text-center mb-10">
-              <span className="text-7xl text-green-500 font-bold mb-2"> Lera</span>
+              <span className="text-7xl text-green-600 font-bold mb-2"> Lera</span>
               <h1 className="text-3xl text-white font-bold mb-2"> Admin</h1>
-              <p className="text-gray-60">Please sign in to your account</p>
+              <p className="text-green-200">Please sign in to your account</p>
             </div>
 
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
@@ -150,7 +150,7 @@ const LoginPage: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="you@example.com"
                   disabled={loading}
                 />
@@ -169,7 +169,7 @@ const LoginPage: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="••••••••"
                     disabled={loading}
                   />
@@ -198,30 +198,24 @@ const LoginPage: React.FC = () => {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-green-800 focus:ring-green-800 border-gray-100 rounded"
                   disabled={loading}
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-100">
                   Remember me
                 </label>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition duration-200 disabled:opacity-50"
+                className="w-full py-2 px-4 bg-green-400 hover:bg-green-800 text-white rounded-md transition duration-200 disabled:opacity-50"
                 disabled={loading}
               >
                 {loading ? 'Signing In...' : 'Sign In'}
               </button>
             </form>
 
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
-                </div>
-              </div>
-            </div>
+            
           </div>
         </div>
       </div>

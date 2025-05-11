@@ -31,8 +31,10 @@ export default function Sidebar({ isOpen, setIsOpen, darkMode }: SidebarProps) {
   const navItems = [
     { name: "Home", path: "/dashboard", icon: "🏠" },
     { name: "Blog", path: "/blog", icon: "📚" },
-    { name: "Teams", path: "/Team", icon: "👥" },
-    { name: "Media", path: "/media", icon: "🎬" },
+    { name: "Teams", path: "/team", icon: "👥" },
+    { name: "Gallery", path: "/gallery", icon: "🎬" },
+    { name: "contact", path: "/contact", icon: "📞" },
+    
   ];
 
   return (

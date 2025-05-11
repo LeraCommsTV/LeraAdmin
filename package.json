@@ -9,8 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@react-google-maps/api": "^2.20.6",
+    "@tinymce/tinymce-react": "^6.1.0",
     "cloudinary": "^2.6.1",
+    "emoji-picker-react": "^4.12.2",
     "firebase": "^11.6.1",
+    "html-to-md": "^0.8.8",
     "lucide-react": "^0.507.0",
     "next": "15.3.1",
     "react": "^19.0.0",
@@ -18,7 +22,13 @@
     "react-markdown": "^10.1.0",
     "react-player": "^2.16.0",
     "react-router-dom": "^7.5.3",
-    "recharts": "^2.15.3"
+    "react-slick": "^0.30.3",
+    "react-syntax-highlighter": "^15.6.1",
+    "recharts": "^2.15.3",
+    "remark": "^15.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-html": "^16.0.1",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -26,7 +36,10 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-slick": "^0.23.13",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "@types/recharts": "^1.8.29",
+    "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.3.1",
