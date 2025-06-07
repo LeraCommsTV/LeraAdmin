@@ -1,11 +1,11 @@
-"use client"
+"use client";
 import { useState, useEffect } from "react";
-import { 
-  BarChart3, 
-  FileText, 
-  MessageSquare, 
-  Settings, 
-  Users, 
+import {
+  BarChart3,
+  FileText,
+  MessageSquare,
+  Settings,
+  Users,
   Megaphone,
   Clock,
   Calendar,
@@ -19,13 +19,16 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
-  MoreHorizontal
+  MoreHorizontal,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [showNotifications, setShowNotifications] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>('light'); // Theme state
   
   // Sample data
   const campaignPerformanceData = [
@@ -59,6 +62,26 @@ export default function DashboardPage() {
     { id: 4, name: 'Customer Feedback', status: 'Completed', progress: 100, deadline: 'May 20', metrics: { reach: '32.6k', engagement: '7.9k', conversion: '2.8k' } },
   ];
   
+  // Initialize theme from localStorage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'dark' | 'light' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    } else {
+      // Default to light mode if no theme is saved
+      localStorage.setItem('theme', 'light');
+    }
+  }, []);
+
+  // Toggle theme
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+  };
+
   const renderColorfulLegend = (props: { payload: { color: string; value: string }[] }) => {
     const { payload } = props;
     return (
@@ -82,6 +105,15 @@ export default function DashboardPage() {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
             
             <div className="flex items-center space-x-4">
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition duration-200"
+                aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              >
+                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+              </button>
+
               {/* Notification Bell */}
               <div className="relative">
                 <button 
@@ -139,7 +171,6 @@ export default function DashboardPage() {
             >
               Overview
             </button>
-  
             <button 
               onClick={() => setActiveTab('content')}
               className={`px-4 py-2 text-sm font-medium ${activeTab === 'content' ? 'text-green-600 dark:text-green-400 border-b-2 border-green-600 dark:border-green-400' : 'text-gray-500 dark:text-gray-400'}`}
@@ -210,9 +241,9 @@ export default function DashboardPage() {
                   <YAxis stroke="#9CA3AF" />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#1F2937', 
-                      borderColor: '#374151',
-                      color: '#F9FAFB'
+                      backgroundColor: theme === 'light' ? '#FFFFFF' : '#1F2937', 
+                      borderColor: theme === 'light' ? '#D1D5DB' : '#374151',
+                      color: theme === 'light' ? '#1F2937' : '#F9FAFB'
                     }}
                   />
                   <Line 
@@ -252,7 +283,13 @@ export default function DashboardPage() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: theme === 'light' ? '#FFFFFF' : '#1F2937',
+                      borderColor: theme === 'light' ? '#D1D5DB' : '#374151',
+                      color: theme === 'light' ? '#1F2937' : '#F9FAFB'
+                    }}
+                  />
                 </RechartsPieChart>
               </ResponsiveContainer>
             </div>
@@ -273,7 +310,7 @@ export default function DashboardPage() {
         <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <h2 className="text-lg font-medium text-gray-900 dark:text-white">Active Campaigns</h2>
-            <button className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">New Campaign</button>
+            <button className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 dark:hover:bg-green-500">New Campaign</button>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">

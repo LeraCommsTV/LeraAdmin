@@ -164,7 +164,7 @@ export default function AdminWelcomePage() {
                   icon={<Megaphone size={20} />}
                   title="Campaigns"
                   description="Manage your active campaigns"
-                  href="/signin"
+                  href="/projects"
                 />
                 <AdminQuickLink 
                   icon={<FileText size={20} />}
@@ -176,7 +176,7 @@ export default function AdminWelcomePage() {
                   icon={<MessageSquare size={20} />}
                   title="Messages"
                   description="View and respond to inquiries"
-                  href="/signin"
+                  href="/blogs"
                 />
                 <AdminQuickLink 
                   icon={<BarChart3 size={20} />}
@@ -233,10 +233,10 @@ export default function AdminWelcomePage() {
               <Link href="/signin" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
                 Settings
               </Link>
-              <Link href="/signin" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
+              <Link href="/home" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
                 Public Site
               </Link>
-              <Link href="/signin" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
+              <Link href="/blogs" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
                 Blog
               </Link>
             </div>
