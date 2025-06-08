@@ -1,85 +1,30 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, ArrowRight, Search, Filter, Sun, Moon, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
+import { db } from '@/lib/firebase'; // Adjust path to your Firebase config
+import { collection, onSnapshot } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
-// Sample blog data
-const blogPosts = [
-  {
-    id: 1,
-    type: "featured",
-    date: "July 16, 2024",
-    title: "Celebrating Family Bonds: Strength, Unity, and Inclusivity",
-    excerpt: "Exploring the importance of family values in building stronger communities and fostering inclusive environments for all.",
-    image: "https://images.unsplash.com/photo-1511895426328-dc8714191300?w=800&h=600&fit=crop",
-    readTime: "5 min read",
-    category: "Community"
-  },
-  {
-    id: 2,
-    type: "event",
-    date: "July 19, 2024",
-    title: "SCLI Faith Leaders Pivotal to Driving Positive Nutrition Practices",
-    excerpt: "Faith leaders play a crucial role in promoting healthy nutrition practices within their communities through education and advocacy.",
-    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=600&fit=crop",
-    readTime: "4 min read",
-    category: "Health"
-  },
-  {
-    id: 3,
-    type: "event",
-    date: "July 19, 2024",
-    title: "Lera Renews Commitment to Gender Equity",
-    excerpt: "Our ongoing commitment to promoting gender equality and creating inclusive workplaces for sustainable development.",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&h=600&fit=crop",
-    readTime: "3 min read",
-    category: "Equity"
-  },
-  {
-    id: 4,
-    type: "event",
-    date: "July 19, 2024",
-    title: "Lera at PUNCH's 50th Anniversary",
-    excerpt: "Celebrating five decades of impactful journalism and media excellence at PUNCH's milestone anniversary celebration.",
-    image: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=600&fit=crop",
-    readTime: "6 min read",
-    category: "Media"
-  },
-  {
-    id: 5,
-    type: "featured",
-    date: "2024",
-    title: "Remembering Dr. Benjamin Lozare: A Tribute to His Leadership Legacy",
-    excerpt: "Honoring the remarkable life and enduring impact of Dr. Benjamin Lozare's transformational leadership in community development.",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop",
-    readTime: "8 min read",
-    category: "Leadership"
-  },
-  {
-    id: 6,
-    type: "news",
-    date: "June 15, 2024",
-    title: "International Men's Day: Celebrating Male Well-being",
-    excerpt: "To commemorate International Men's Day, the Centre for Communication and Social Impact (CCSI) celebrated men's resilience and positive contributions by hosting an in-house well-being session for male colleagues.",
-    image: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&h=600&fit=crop",
-    readTime: "4 min read",
-    category: "Wellness"
-  }
-];
-
-const categories = ["All", "Community", "Health", "Equity", "Media", "Leadership", "Wellness"];
-
-// Blog Card Component
+// Blog Post Type (aligned with admin)
 type BlogPost = {
-  id: number;
-  type: string;
+  id: string; // Firestore uses string IDs
+  type: string; // e.g., "featured", "event", "news"
   date: string;
   title: string;
   excerpt: string;
-  image: string;
-  readTime: string;
+  content: string; // Full content for detail page
+  image: string; // Maps to featuredImage
+  readTime: string; // Computed or stored
   category: string;
+  status: 'published' | 'draft' | 'archived'; // From admin
+  author: string;
+  tags: string[];
+  views: number;
+  videoUrl?: string;
+  featuredImagePublicId?: string;
 };
 
+// Blog Card Component
 interface BlogCardProps {
   post: BlogPost;
   size?: "small" | "large";
@@ -87,10 +32,18 @@ interface BlogCardProps {
 }
 
 const BlogCard: React.FC<BlogCardProps> = ({ post, size = "small", isDark }) => {
+  const router = useRouter();
   const isLarge = size === "large";
   
   return (
-    <article className="group cursor-pointer transform hover:scale-105 transition-all duration-300">
+    <article
+      className="group cursor-pointer transform hover:scale-105 transition-all duration-300"
+      onClick={() => router.push(`/blogs/${post.id}`)}
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && router.push(`/blogs/${post.id}`)}
+      aria-label={`Read more about ${post.title}`}
+    >
       <div 
         className={`relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 ${isLarge ? 'h-96' : 'h-64'}`}
         style={{
@@ -136,10 +89,18 @@ const BlogCard: React.FC<BlogCardProps> = ({ post, size = "small", isDark }) => 
   );
 };
 
-// Regular Blog Card Component (for bottom section)
+// Regular Blog Card Component
 const RegularBlogCard: React.FC<{ post: BlogPost; isDark: boolean }> = ({ post, isDark }) => {
+  const router = useRouter();
   return (
-    <article className="group cursor-pointer transform hover:scale-105 transition-all duration-300">
+    <article
+      className="group cursor-pointer transform hover:scale-105 transition-all duration-300"
+      onClick={() => router.push(`/blogs/${post.id}`)}
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && router.push(`/blogs/${post.id}`)}
+      aria-label={`Read more about ${post.title}`}
+    >
       <div className="relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
         <div className="absolute top-3 right-3 z-10">
           <span className="px-2 py-1 text-xs font-bold uppercase tracking-wide bg-green-500 text-black rounded">
@@ -193,7 +154,6 @@ const Carousel: React.FC<{ posts: BlogPost[]; isDark: boolean }> = ({ posts, isD
     );
   };
 
-  // Auto-play functionality
   useEffect(() => {
     if (isAutoPlay) {
       const interval = setInterval(nextSlide, 4000);
@@ -218,21 +178,21 @@ const Carousel: React.FC<{ posts: BlogPost[]; isDark: boolean }> = ({ posts, isD
         ))}
       </div>
       
-      {/* Navigation buttons */}
       <button
         onClick={prevSlide}
         className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-300"
+        aria-label="Previous slide"
       >
         <ChevronLeft size={20} />
       </button>
       <button
         onClick={nextSlide}
         className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-300"
+        aria-label="Next slide"
       >
         <ChevronRight size={20} />
       </button>
       
-      {/* Dots indicator */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
         {posts.map((_, index) => (
           <button
@@ -241,6 +201,7 @@ const Carousel: React.FC<{ posts: BlogPost[]; isDark: boolean }> = ({ posts, isD
             className={`w-3 h-3 rounded-full transition-all duration-300 ${
               index === currentIndex ? 'bg-green-500' : 'bg-white/50'
             }`}
+            aria-label={`Go to slide ${index + 1}`}
           />
         ))}
       </div>
@@ -250,18 +211,59 @@ const Carousel: React.FC<{ posts: BlogPost[]; isDark: boolean }> = ({ posts, isD
 
 // Main Blog Page Component
 export default function BlogPage() {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch posts from Firestore
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'blogPosts'), (snapshot) => {
+      const fetchedPosts: BlogPost[] = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          image: doc.data().featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=600&fit=crop', // Fallback image
+          readTime: doc.data().readTime || estimateReadTime(doc.data().content || ''), // Compute if not stored
+          type: doc.data().type || 'news', // Default to 'news' if not set
+        })) as BlogPost[];
+      const publishedPosts = fetchedPosts.filter(post => post.status === 'published'); // Only show published posts
+      setPosts(publishedPosts);
+      setLoading(false);
+    }, (err) => {
+      console.error('Error fetching posts:', err);
+      setError('Failed to load posts. Please try again.');
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Estimate read time based on content (approx. 200 words per minute)
+  const estimateReadTime = (content: string) => {
+    try {
+      const contentState = JSON.parse(content);
+      const text = contentState.blocks?.map((block: any) => block.text).join(' ') || '';
+      const wordCount = text.split(/\s+/).filter(Boolean).length;
+      const minutes = Math.ceil(wordCount / 200);
+      return `${minutes} min read`;
+    } catch {
+      return '5 min read'; // Fallback
+    }
+  };
+
+  // Dynamic categories from Firestore
+  const categories = ['All', ...Array.from(new Set(posts.map(post => post.category)))];
 
   // Toggle dark mode
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
   };
 
-  // Filter posts based on category and search term
-  const filteredPosts = blogPosts.filter(post => {
+  // Filter posts
+  const filteredPosts = posts.filter(post => {
     const matchesCategory = selectedCategory === "All" || post.category === selectedCategory;
     const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          post.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
@@ -271,18 +273,32 @@ export default function BlogPage() {
   const featuredPosts = filteredPosts.filter(post => post.type === "featured");
   const otherPosts = filteredPosts.filter(post => post.type !== "featured");
 
+  if (loading) {
+    return (
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'} flex items-center justify-center`}>
+        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>Loading posts...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'} flex items-center justify-center`}>
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
       isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'
     }`}>
       {/* Header with Dark Mode Toggle */}
       <header className="relative">
-        
-
-        {/* Dark Mode Toggle */}
         <button
           onClick={toggleDarkMode}
           className="fixed top-4 left-60 md:top-4 md:right-160 md:left-auto z-50 p-3 rounded-lg bg-green-600 text-white shadow-lg hover:bg-green-700 transition-colors duration-300 hover:scale-110"
+          aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
@@ -302,7 +318,6 @@ export default function BlogPage() {
             Stay updated with our latest news, events, and thought leadership
           </p>
           
-          {/* Search and Filter */}
           <div className="flex flex-col md:flex-row gap-4 justify-center items-center max-w-2xl mx-auto">
             <div className="relative flex-1 w-full">
               <Search size={20} className={`absolute left-3 top-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
@@ -316,6 +331,7 @@ export default function BlogPage() {
                     ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' 
                     : 'bg-gray-100 border-gray-300 text-gray-900 placeholder-gray-500'
                 }`}
+                aria-label="Search articles"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -328,6 +344,7 @@ export default function BlogPage() {
                     ? 'bg-gray-800 border-gray-700 text-white' 
                     : 'bg-gray-100 border-gray-300 text-gray-900'
                 }`}
+                aria-label="Filter by category"
               >
                 {categories.map(category => (
                   <option key={category} value={category}>{category}</option>
@@ -340,19 +357,19 @@ export default function BlogPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 pb-16">
-        {/* Featured Posts Carousel */}
         {featuredPosts.length > 0 && (
           <div className="mb-16">
             <h2 className={`text-2xl font-light mb-8 text-center ${
               isDarkMode ? 'text-white' : 'text-gray-900'
             }`}>
+              Featured威力
+
               Featured Stories
             </h2>
             <Carousel posts={featuredPosts} isDark={isDarkMode} />
           </div>
         )}
 
-        {/* Other Posts Grid */}
         {otherPosts.length > 0 && (
           <>
             <div className={`border-t pt-16 mb-8 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
@@ -372,7 +389,6 @@ export default function BlogPage() {
           </>
         )}
 
-        {/* No Results */}
         {filteredPosts.length === 0 && (
           <div className="text-center py-16">
             <h3 className={`text-2xl font-light mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -405,6 +421,7 @@ export default function BlogPage() {
                   ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                   : 'bg-gray-100 border-gray-300 text-gray-900 placeholder-gray-500'
               }`}
+              aria-label="Email for newsletter"
             />
             <button className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-300 transform hover:scale-105">
               Subscribe

@@ -62,3 +62,23 @@ export const deleteFromCloudinary = async (publicId: string): Promise<void> => {
       : new Error('Unknown error occurred during Cloudinary deletion');
   }
 };
+export const extractPublicIdsFromContent = (contentJson: string): string[] => {
+  try {
+    const content = JSON.parse(contentJson);
+    const publicIds: string[] = [];
+
+    // Check entity map for media entities
+    if (content.entityMap) {
+      Object.values(content.entityMap).forEach((entity: any) => {
+        if (entity.type === 'MEDIA' && entity.data?.publicId) {
+          publicIds.push(entity.data.publicId);
+        }
+      });
+    }
+
+    return publicIds;
+  } catch (error) {
+    console.error('Error extracting public IDs:', error);
+    return [];
+  }
+};

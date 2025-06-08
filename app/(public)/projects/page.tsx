@@ -5,20 +5,21 @@ import { Sun, Moon, ChevronLeft, ChevronRight } from "lucide-react";
 import { db } from "@/lib/firebase"; // Adjust path to your firebase.ts file
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { useRouter } from "next/navigation"; // For App Router (Next.js 13+)
+import { uploadToCloudinary } from "@/lib/cloudinary"; // Your Cloudinary upload function
 
 // Interface for project data from Firestore
 interface ProjectDetail {
-  id: string; // Firestore document ID
+  id: string;
   title: string;
   description: string;
-  imageUrl: string; // Unified field for display, derived from imageUrls or fallback
+  imageUrl: string; // Cloudinary URL from Firebase
   fullDescription: string;
   objectives: string[];
   outcomes: string[];
   duration: string;
   location: string;
-  createdAt?: any; // For ordering, can be Firebase Timestamp
-  status?: string; // e.g., 'active', 'completed', 'draft'
+  createdAt?: any;
+  status?: string;
 }
 
 // Interface for carousel items from Firestore
@@ -26,9 +27,9 @@ interface CarouselItem {
   id: string;
   title: string;
   description: string;
-  image: string; // Cloudinary secure URL stored in Firestore
-  order?: number; // For ordering carousel items
-  isActive?: boolean; // To show/hide carousel items
+  image: string; // Cloudinary URL from Firebase
+  order?: number;
+  isActive?: boolean;
 }
 
 interface CardProps {
@@ -52,9 +53,6 @@ const Card: React.FC<CardProps> = ({ title, description, imageUrl, isDarkMode, i
     return () => clearTimeout(timer);
   }, [index]);
 
-  // Fallback image if Cloudinary image fails to load
-  const fallbackImage = 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=2069&q=80';
-
   return (
     <div
       onClick={onClick}
@@ -64,8 +62,7 @@ const Card: React.FC<CardProps> = ({ title, description, imageUrl, isDarkMode, i
           : 'translate-y-8 opacity-0 scale-95'
       } hover:scale-105 hover:shadow-2xl hover:-translate-y-2`}
       style={{ 
-        backgroundImage: `url(${imageError ? fallbackImage : (imageUrl || fallbackImage)})`,
-        animationDelay: `${index * 200}ms`
+        backgroundImage: imageError ? 'none' : (imageUrl ? `url(${imageUrl})` : "url('/friends.png')")
       }}
     >
       {/* Hidden image to detect loading errors */}
@@ -140,8 +137,6 @@ const Carousel: React.FC<{ items: CarouselItem[], isDarkMode: boolean }> = ({ it
     );
   }
 
-  const fallbackImage = 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
-
   return (
     <div 
       className="relative overflow-hidden rounded-lg"
@@ -157,7 +152,7 @@ const Carousel: React.FC<{ items: CarouselItem[], isDarkMode: boolean }> = ({ it
             <div
               className="relative h-96 bg-cover bg-center"
               style={{ 
-                backgroundImage: `url(${imageErrors[index] ? fallbackImage : (item.image || fallbackImage)})` 
+                backgroundImage: imageErrors[index] ? "url('/friends.png')" : (item.image ? `url(${item.image})` : "url('/friends.png')")
               }}
             >
               <img
@@ -230,7 +225,7 @@ const ProjectsPage = () => {
   const [carouselItems, setCarouselItems] = useState<CarouselItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter(); // Hook for navigation
+  const router = useRouter();
 
   // Fetch data from Firestore
   useEffect(() => {
@@ -246,12 +241,11 @@ const ProjectsPage = () => {
         
         const projectsData: ProjectDetail[] = projectsSnapshot.docs.map((doc) => {
           const data = doc.data();
-          // Handle imageUrls array from ProjectManagementPage or single imageUrl
           const imageUrl = Array.isArray(data.imageUrls) && data.imageUrls.length > 0 
-            ? data.imageUrls[0].url // Use first image from array
-            : data.imageUrl || ""; // Fallback to single imageUrl field
+            ? data.imageUrls[0].url
+            : data.imageUrl || "/friends.png"; // Default to friends.png if no image
           return {
-            id: doc.id, // Use Firestore document ID
+            id: doc.id,
             title: data.title || "Untitled Project",
             description: data.description || "No description available",
             imageUrl: imageUrl,
@@ -265,7 +259,6 @@ const ProjectsPage = () => {
           };
         });
         
-        // Filter only active projects
         const activeProjects = projectsData.filter(project => project.status !== 'draft');
         setProjects(activeProjects);
 
@@ -280,13 +273,12 @@ const ProjectsPage = () => {
             id: doc.id,
             title: data.title || "Featured Project",
             description: data.description || "No description available",
-            image: data.image || data.imageUrl || "", // Support both field names
+            image: data.image || data.imageUrl || "/friends.png", // Default to friends.png if no image
             order: data.order || 0,
-            isActive: data.isActive !== false // Default to true if not specified
+            isActive: data.isActive !== false
           };
         });
         
-        // Filter only active carousel items
         const activeCarouselItems = carouselData.filter(item => item.isActive);
         setCarouselItems(activeCarouselItems);
 
@@ -302,10 +294,8 @@ const ProjectsPage = () => {
 
     fetchData();
 
-    // Trigger hero animation
     const heroTimer = setTimeout(() => setHeroVisible(true), 100);
     
-    // Trigger section animation
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -331,7 +321,6 @@ const ProjectsPage = () => {
   };
 
   const handleCardClick = (projectId: string) => {
-    // Navigate to the project detail page
     router.push(`/projects/${projectId}`);
   };
 
@@ -364,7 +353,6 @@ const ProjectsPage = () => {
 
   return (
     <div className={isDarkMode ? 'dark' : ''}>
-      {/* Custom CSS for animations */}
       <style jsx>{`
         @keyframes fade-in-up {
           from {
@@ -386,7 +374,6 @@ const ProjectsPage = () => {
         }
       `}</style>
 
-      {/* Theme Toggle Button */}
       <button
         onClick={toggleTheme}
         className="fixed top-4 left-60 md:top-4 md:right-160 md:left-auto z-50 p-3 rounded-lg bg-green-600 dark:bg-green-700 shadow-lg border border-green-600 dark:border-green-700 hover:shadow-xl transition-all duration-300 hover:scale-110"
@@ -402,20 +389,17 @@ const ProjectsPage = () => {
       <main className={`transition-colors duration-500 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
         {/* Hero Section with Background Image */}
         <section className="relative md:h-[80vh] min-h-[70vh] w-full overflow-hidden">
-          {/* Background Image with parallax effect */}
           <div 
             className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-110 transition-transform duration-1000 hover:scale-105"
             style={{
-              backgroundImage: `url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`
+              backgroundImage: "url('/images/projectBg.jpeg')"
             }}
           />
           
-          {/* Animated overlay */}
           <div className={`absolute inset-0 transition-all duration-700 ${
             isDarkMode ? 'bg-black/80' : 'bg-black/70'
           } ${heroVisible ? 'opacity-100' : 'opacity-0'}`} />
           
-          {/* Content with staggered animation */}
           <div className="relative h-full w-full flex flex-col justify-center md:px-20 px-8 md:pt-28 md:pb-28 pt-52 pb-10 text-white">
             <div className="md:w-[40%]">
               <h1 className={`text-3xl font-bold leading-8 mb-4 transform transition-all duration-1000 ${
@@ -463,7 +447,6 @@ const ProjectsPage = () => {
             isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
           }`}
         >
-          {/* Section Header with animation */}
           <div className={`mb-12 text-center transform transition-all duration-800 ${
             sectionVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
           }`}>
@@ -479,7 +462,6 @@ const ProjectsPage = () => {
             </p>
           </div>
 
-          {/* Project Grid with staggered animations */}
           {projects.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {projects.map((project, index) => (
