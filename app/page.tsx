@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { 
   BarChart3, 
   FileText, 
@@ -20,6 +21,8 @@ import {
 
 export default function AdminWelcomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  redirect("/home"); // Redirect to another page
+  
   
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
