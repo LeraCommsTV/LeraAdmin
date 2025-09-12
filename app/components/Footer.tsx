@@ -9,7 +9,7 @@ import {
   FaYoutube,
   FaTwitter,
 } from 'react-icons/fa';
-import { db } from '@/lib/firebase'; // Adjust path to your Firebase config
+import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 
 const Footer = () => {
@@ -22,14 +22,37 @@ const Footer = () => {
   const [message, setMessage] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
+  // Clear messages after 5 seconds
+  React.useEffect(() => {
+    if (message || error) {
+      const timer = setTimeout(() => {
+        setMessage(null);
+        setError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message, error]);
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email) && email.length <= 254;
+  };
+
   const handleSubscribe = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setMessage(null);
     setIsLoading(true);
 
-    // Email validation
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+    // Enhanced email validation
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setError('Please enter an email address.');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!validateEmail(trimmedEmail)) {
       setError('Please enter a valid email address.');
       setIsLoading(false);
       return;
@@ -38,7 +61,7 @@ const Footer = () => {
     try {
       // Check if email already exists
       const subscribersRef = collection(db, 'subscribers');
-      const q = query(subscribersRef, where('email', '==', email.toLowerCase()));
+      const q = query(subscribersRef, where('email', '==', trimmedEmail.toLowerCase()));
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
@@ -48,20 +71,25 @@ const Footer = () => {
       }
 
       // Add new subscriber
-      await addDoc(subscribersRef, {
-        email: email.toLowerCase(),
+      const docRef = await addDoc(subscribersRef, {
+        email: trimmedEmail.toLowerCase(),
         subscribedAt: serverTimestamp(),
         status: 'active',
         source: 'footer_subscription',
-        ipAddress: null, // You can add IP tracking if needed
         userAgent: navigator.userAgent,
+        // Additional metadata
+        domain: trimmedEmail.split('@')[1],
+        createdAt: new Date().toISOString(),
       });
 
+      console.log('Subscriber added with ID:', docRef.id);
       setMessage('Thank you for subscribing! You\'ll receive our latest updates.');
       setEmail('');
     } catch (error) {
       console.error('Error adding subscriber:', error);
-      setError('Something went wrong. Please try again later.');
+      
+      // Handle specific Firebase errors
+     
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +111,7 @@ const Footer = () => {
           {/* Logo Section */}
           <div>
             <Image
-              src="/images/lera1.svg"
+              src="/images/lera.svg"
               alt="LERA Communications Logo"
               width={120}
               height={40}
@@ -150,23 +178,35 @@ const Footer = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
-                className="flex-1 px-4 py-2 rounded-md bg-white text-black font-mona text-xs placeholder-green-300 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-50"
+                className="flex-1 px-4 py-2 rounded-md bg-white text-black font-mona text-xs placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-50"
                 aria-label="Email for newsletter subscription"
+                maxLength={254}
               />
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !email.trim()}
                 className="px-4 py-2 bg-green-600 text-white rounded-md font-mona text-xs font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Subscribe to newsletter"
               >
                 {isLoading ? 'Subscribing...' : 'Subscribe'}
               </button>
             </div>
-            {error && <p className="text-xs text-red-400">{error}</p>}
-            {message && <p className="text-xs text-green-400">{message}</p>}
+            
+            {/* Error/Success Messages */}
+            {error && (
+              <div className="p-2 bg-red-900/50 border border-red-500 rounded text-xs text-red-300">
+                {error}
+              </div>
+            )}
+            {message && (
+              <div className="p-2 bg-green-900/50 border border-green-500 rounded text-xs text-green-300">
+                {message}
+              </div>
+            )}
+            
             <p className="text-xs font-mona font-light">
               By subscribing, you agree to our{' '}
-              <Link href="/privacy" className="hover:text-green-400">
+              <Link href="/privacy" className="hover:text-green-400 underline">
                 Privacy Policy
               </Link>
             </p>
@@ -177,46 +217,32 @@ const Footer = () => {
       {/* Bottom Content */}
       <div className="flex flex-col md:flex-row items-center justify-center md:justify-between mt-6 pr-8 md:pl-28 pl-8 md:pr-16 pb-8 pt-3 md:space-y-2 space-y-0 gap-4">
         <div className="flex items-center gap-3">
-          <div className="h-[30px] w-[30px] bg-white rounded-full flex justify-center items-center transition-colors duration-300 hover:bg-blue-600 active:bg-blue-200">
-            <FaFacebook 
-              color="#1E3A8A" 
-              size={18} 
-              className="transition-colors duration-300 hover:text-blue-600 active:text-blue-800" 
-            />
-          </div>
-          <div className="h-[30px] w-[30px] bg-white rounded-full flex justify-center items-center transition-colors duration-300 hover:bg-blue-600 active:bg-blue-200">
-            <FaLinkedin 
-              color="#1E3A8A" 
-              size={18} 
-              className="transition-colors duration-300 hover:text-blue-700 active:text-blue-900" 
-            />
-          </div>
-          <div className="h-[30px] w-[30px] bg-white rounded-full flex justify-center items-center transition-colors duration-300 hover:bg-pink-600 active:bg-pink-200">
-            <FaInstagram 
-              color="#1E3A8A" 
-              size={18} 
-              className="transition-colors duration-300 hover:text-pink-500 active:text-pink-700" 
-            />
-          </div>
-          <div className="h-[30px] w-[30px] bg-white rounded-full flex justify-center items-center transition-colors duration-300 hover:bg-red-600 active:bg-red-200">
-            <FaYoutube 
-              color="#1E3A8A" 
-              size={18} 
-              className="transition-colors duration-300 hover:text-red-600 active:text-red-800" 
-            />
-          </div>
-          <div className="h-[30px] w-[30px] bg-white rounded-full flex justify-center items-center transition-colors duration-300 hover:bg-blue-600 active:bg-blue-200">
-            <FaTwitter 
-              color="#1E3A8A" 
-              size={18} 
-              className="transition-colors duration-300 hover:text-blue-500 active:text-blue-700" 
-            />
-          </div>
+          {[
+            { Icon: FaFacebook, hoverColor: 'hover:bg-blue-600' },
+            { Icon: FaLinkedin, hoverColor: 'hover:bg-blue-600' },
+            { Icon: FaInstagram, hoverColor: 'hover:bg-pink-600' },
+            { Icon: FaYoutube, hoverColor: 'hover:bg-red-600' },
+            { Icon: FaTwitter, hoverColor: 'hover:bg-blue-600' }
+          ].map(({ Icon, hoverColor }, index) => (
+            <div key={index} className={`h-[30px] w-[30px] bg-white rounded-full flex justify-center items-center transition-colors duration-300 ${hoverColor} active:bg-gray-200 cursor-pointer`}>
+              <Icon 
+                color="#1e8a46" 
+                size={18} 
+                className="transition-colors duration-300" 
+              />
+            </div>
+          ))}
         </div>
         <div className="flex space-x-4">
-          <p className={bottomFooter}>Privacy Policy</p>
-          <p className={bottomFooter}>Terms of Service</p>
-          <p className={bottomFooter}>Cookie Policy</p>
+          <Link href="/privacy" className={`${bottomFooter} hover:text-green-400 cursor-pointer`}>
+            Privacy Policy
+          </Link>
+          <Link href="/terms" className={`${bottomFooter} hover:text-green-400 cursor-pointer`}>
+            Terms of Service
+          </Link>
+          <Link href="/cookies" className={`${bottomFooter} hover:text-green-400 cursor-pointer`}>
+            Cookie Policy
+          </Link>
         </div>
         <p className={bottomFooter}>
           © 2025 Lera Communication Consult. All rights reserved

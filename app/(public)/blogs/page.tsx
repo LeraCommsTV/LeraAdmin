@@ -305,7 +305,7 @@ export default function BlogPage() {
       </header>
 
       {/* Hero Section */}
-      <div className="relative py-16 px-8 text-center">
+      <div className="relative py-16 px-8 mt-8 text-center">
         <div className="max-w-4xl mx-auto">
           <h1 className={`text-4xl md:text-6xl font-light mb-6 animate-fade-in ${
             isDarkMode ? 'text-white' : 'text-gray-900'

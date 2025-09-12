@@ -22,7 +22,9 @@ const Header: React.FC<HeaderProps> = ({ isHome = false, isWhite = false, active
     { name: 'Resources', path: 'resources' },
     { name: 'Projects', path: 'projects' },
     { name: 'Blog', path: 'blogs' },
+    { name: 'Podcast', path: 'podcast' },
     { name: 'Contact', path: 'contacts' },
+    
   ];
 
   const handleClick = () => setNav(!nav);
