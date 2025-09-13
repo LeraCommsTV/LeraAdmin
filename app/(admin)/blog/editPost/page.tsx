@@ -8,6 +8,8 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
 import RichTextEditor from '@/components/RichTextEditor';
 import { uploadToCloudinary, deleteFromCloudinary, extractPublicIdsFromContent } from '@/lib/cloudinary';
+// Add this to force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 type BlogPost = {
   id?: string;
