@@ -1,8 +1,10 @@
-// app/layout.tsx (SINGLE FILE - Remove any duplicate)
+// Updated Layout with ScrollToTop
+// app/layout.tsx (UPDATED - Add ScrollToTop component)
 import type { Metadata } from 'next'
 import './globals.css'
 import { Header, Footer } from '@/components'
 import { ThemeProvider } from '@/context/ThemeContext'
+import ScrollToTop from '@/components/ScrollToTop'
 
 export const metadata: Metadata = {
   title: 'LERA Communications - Transforming Narratives, Elevating Impact',
@@ -11,12 +13,12 @@ export const metadata: Metadata = {
     icon: {
       url: '/images/lera1.svg',
       sizes: '128x128',
-      type: 'image/svg+xml', // Fixed MIME type
+      type: 'image/svg+xml',
     },
   },
 }
 
-export default function RootLayout({
+export default function PublicLayout({
   children,
 }: {
   children: React.ReactNode
@@ -25,7 +27,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         <ThemeProvider>
+          <Header isHome />
           <main>{children}</main>
+          <Footer />
+          {/* Scroll to Top Button */}
+          <ScrollToTop showAfter={ 100} scrollBehavior="instant" />
         </ThemeProvider>
       </body>
     </html>

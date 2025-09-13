@@ -207,12 +207,12 @@ const Team = () => {
   const { isDark } = useTheme();
   const teamMembers = [
     {
-      name: "John Doe",
+      name: "Charles Doke",
       position: "CEO & Founder",
       bio: "Strategic communications expert with over 15 years of experience.",
     },
     {
-      name: "Jane Smith",
+      name: "Kelechi Obinna",
       position: "Creative Director",
       bio: "Award-winning creative professional specializing in brand storytelling.",
     },

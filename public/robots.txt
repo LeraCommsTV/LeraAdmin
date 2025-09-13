@@ -1,0 +1,21 @@
+# public/robots.txt
+
+# Allow all crawlers
+User-agent: *
+Allow: /
+Allow: /blogs
+Allow: /about
+Allow: /podcast
+Allow: /contacts
+Allow: /projects
+
+# Block specific paths (examples)
+Disallow: /admin
+Disallow: /api/
+Disallow: /private
+
+# Specify your sitemap location
+Sitemap: https://leracoms.com/sitemap.xml
+
+# Crawl delay (optional)
+Crawl-delay: 1

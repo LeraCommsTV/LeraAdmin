@@ -244,7 +244,7 @@ const ServicesCarousel = () => {
   )
 }
 
-// Google Maps Component
+// Google Maps Component - Updated with embedded iframe
 const GoogleMap = () => {
   const { isDark } = useTheme();
   const [setRef, isInView] = useInView()
@@ -252,23 +252,20 @@ const GoogleMap = () => {
   return (
     <div
       ref={setRef}
-      className={`w-full h-96 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-2xl overflow-hidden shadow-xl flex items-center justify-center transform transition-all duration-1000 ${
+      className={`w-full rounded-2xl overflow-hidden shadow-xl transform transition-all duration-1000 ${
         isInView ? "translate-y-0 opacity-100 scale-100" : "translate-y-12 opacity-0 scale-95"
       }`}
     >
-      <div className="text-center p-8">
-        <div className="text-6xl mb-4 animate-pulse">🗺️</div>
-        <h3 className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">Interactive Map</h3>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
-          No 72, Birnin Kebbi Crescent
-          <br />
-          Garki, Abuja, Nigeria
-        </p>
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full text-sm">
-          <MapPin size={16} />
-          Visit Our Office
-        </div>
-      </div>
+      <iframe 
+        src="https://www.google.com/maps/embed?pb=!1m23!1m12!1m3!1d126062.9705737251!2d7.295415283518883!3d9.112146734420778!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m8!3e6!4m0!4m5!1s0x104e75a4c68928d1%3A0x79a33d9e0f6d043c!2sBaraqa%20Mall%2C%20Off%206th%20Ave%2C%20Gwarinpa%20Estate%2C%20Abuja!3m2!1d9.112155999999999!2d7.3778172!5e0!3m2!1sen!2sng!4v1757739988590!5m2!1sen!2sng" 
+        width="100%" 
+        height="450" 
+        style={{ border: 0 }}
+        allowFullScreen={true}
+        loading="lazy" 
+        referrerPolicy="no-referrer-when-downgrade"
+        className="w-full"
+      />
     </div>
   )
 }
@@ -551,9 +548,9 @@ const ContactForm = () => {
 
               <div className="space-y-6">
                 {[
-                  { icon: MapPin, title: "Address", content: "No 72, Birnin Kebbi Crescent, Garki, Abuja, Nigeria" },
+                  { icon: MapPin, title: "Address", content: "Baraqa Mall, off 69, Gwarinpa Estate, Abuja, Nigeria" },
                   { icon: Phone, title: "Phone", content: "+234 806 775 0659" },
-                  { icon: Mail, title: "Email", content: "info@leracommunications.com" },
+                  { icon: Mail, title: "Email", content: "info@leracoms.com" },
                   {
                     icon: Clock,
                     title: "Business Hours",

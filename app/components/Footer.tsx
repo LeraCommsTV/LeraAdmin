@@ -100,10 +100,9 @@ const Footer = () => {
       {/* Top Header */}
       <div className="py-4 md:px-12 px-8">
         <p className="text-center font-mona font-semibold text-xs">
-          16B, House 2, Ademola Adetokunbo, Wuse II, Abuja. | +234-9-2918264 |
-          info@lera.org
+          Baraqa Mall, off 69, Gwarinpa Estate, Abuja, Nigeria. | +234 806 775 0659 |
+          info@leracoms.com
         </p>
-      </div>
 
       {/* Middle Content */}
       <div className="grid grid-cols-1 md:grid-cols-2 items-start border-y border-y-white">
@@ -218,20 +217,53 @@ const Footer = () => {
       <div className="flex flex-col md:flex-row items-center justify-center md:justify-between mt-6 pr-8 md:pl-28 pl-8 md:pr-16 pb-8 pt-3 md:space-y-2 space-y-0 gap-4">
         <div className="flex items-center gap-3">
           {[
-            { Icon: FaFacebook, hoverColor: 'hover:bg-blue-600' },
-            { Icon: FaLinkedin, hoverColor: 'hover:bg-blue-600' },
-            { Icon: FaInstagram, hoverColor: 'hover:bg-pink-600' },
-            { Icon: FaYoutube, hoverColor: 'hover:bg-red-600' },
-            { Icon: FaTwitter, hoverColor: 'hover:bg-blue-600' }
-          ].map(({ Icon, hoverColor }, index) => (
-            <div key={index} className={`h-[30px] w-[30px] bg-white rounded-full flex justify-center items-center transition-colors duration-300 ${hoverColor} active:bg-gray-200 cursor-pointer`}>
+            { 
+              Icon: FaFacebook, 
+              hoverColor: 'hover:bg-blue-600',
+              link: 'https://web.facebook.com/lera24.com.ng',
+              label: 'Facebook'
+            },
+            { 
+              Icon: FaLinkedin, 
+              hoverColor: 'hover:bg-blue-600',
+              link: 'https://www.linkedin.com/company/lera-communications/',
+              label: 'LinkedIn'
+            },
+            { 
+              Icon: FaInstagram, 
+              hoverColor: 'hover:bg-pink-600',
+              link: 'https://www.instagram.com/leracommunications',
+              label: 'Instagram'
+            },
+            { 
+              Icon: FaYoutube, 
+              hoverColor: 'hover:bg-red-600',
+              link: 'https://www.youtube.com/@leracommunications',
+              label: 'YouTube'
+            },
+            { 
+              Icon: FaTwitter, 
+              hoverColor: 'hover:bg-blue-400',
+              link: 'https://twitter.com/leracoms',
+              label: 'Twitter'
+            }
+          ].map(({ Icon, hoverColor, link, label }, index) => (
+            <a
+              key={index}
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Visit our ${label} page`}
+              className={`h-[30px] w-[30px] bg-white rounded-full flex justify-center items-center transition-all duration-300 ${hoverColor} hover:scale-110 hover:shadow-lg active:scale-95 cursor-pointer group`}
+            >
               <Icon 
                 color="#1e8a46" 
                 size={18} 
-                className="transition-colors duration-300" 
+                className="transition-all duration-300 group-hover:text-white" 
               />
-            </div>
+            </a>
           ))}
+        </div>
         </div>
         <div className="flex space-x-4">
           <Link href="/privacy" className={`${bottomFooter} hover:text-green-400 cursor-pointer`}>

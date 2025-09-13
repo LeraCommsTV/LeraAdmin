@@ -1,50 +1,115 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { FaFilePdf } from "react-icons/fa";
-import { Sun, Moon } from "lucide-react";
+import { FaFilePdf, FaDownload, FaEye } from "react-icons/fa";
+import { Sun, Moon, ArrowRight, CheckCircle, Users, Award, Globe } from "lucide-react";
 import { useTheme } from '@/context/ThemeContext';
-
 
 export default function HomePage() {
   const { isDark } = useTheme();
+  const [downloadStatus, setDownloadStatus] = useState<{[key: string]: 'idle' | 'downloading' | 'success' | 'error'}>({});
 
   interface DownloadItem {
     title: string;
     description: string;
     fileName: string;
-    fileSize: string;
     fileType: string;
+    category: string;
+    lastUpdated: string;
   }
 
   const downloadItems: DownloadItem[] = [
     {
       title: "Company Profile",
-      description:
-        "We believe communication saves lives, so we inspire change by building capacity for health, social development across the spectrum of strategic communication design development.",
-      fileName: "Lera Company Profile",
-      fileSize: "1 file (9kb) | 17.2mb",
+      description: "Comprehensive overview of our mission, vision, services, and impact across health, education, and social development sectors.",
+      fileName: "Lera Profile",
       fileType: "pdf",
+      category: "Corporate",
+      lastUpdated: "2024"
     },
     {
-      title: "Company Profile",
-      description:
-        "We believe communication saves lives, so we inspire change by building capacity for health, social development across the spectrum of strategic communication design development.",
-      fileName: "Lera Company Profile",
-      fileSize: "1 file (9kb) | 17.2mb",
+      title: "Services Brochure",
+      description: "Detailed information about our strategic communication services, capacity building programs, and consulting offerings.",
+      fileName: "Lera Services",
       fileType: "pdf",
-    },
+      category: "Services",
+      lastUpdated: "2024"
+    }
   ];
 
-  const handleDownload = (fileName: string) => {
-    // Add your download logic here
-    console.log(`Downloading ${fileName}`);
+  const handleDownload = async (fileName: string) => {
+    try {
+      setDownloadStatus(prev => ({ ...prev, [fileName]: 'downloading' }));
+      
+      // Try different possible paths
+      const possiblePaths = [
+        `/document/${fileName}.pdf`,
+        `/${fileName}.pdf`,
+        `/public/document/${fileName}.pdf`,
+        `/documents/${fileName}.pdf`
+      ];
+      
+      let fileUrl = null;
+      let response = null;
+      
+      // Test each path to find the correct one
+      for (const path of possiblePaths) {
+        try {
+          console.log(`Trying path: ${path}`);
+          response = await fetch(path, { method: 'HEAD' });
+          if (response.ok) {
+            fileUrl = path;
+            console.log(`Found file at: ${path}`);
+            break;
+          }
+        } catch (err) {
+          console.log(`Path ${path} failed:`, err);
+          continue;
+        }
+      }
+      
+      if (!fileUrl || !response?.ok) {
+        console.error('File not found at any of the expected paths:', possiblePaths);
+        throw new Error(`File not found. Tried paths: ${possiblePaths.join(', ')}`);
+      }
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `${fileName}.pdf`;
+      link.style.display = 'none';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setDownloadStatus(prev => ({ ...prev, [fileName]: 'success' }));
+      
+      // Reset status after 3 seconds
+      setTimeout(() => {
+        setDownloadStatus(prev => ({ ...prev, [fileName]: 'idle' }));
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Download failed:', error);
+      setDownloadStatus(prev => ({ ...prev, [fileName]: 'error' }));
+      
+      // Reset status after 3 seconds
+      setTimeout(() => {
+        setDownloadStatus(prev => ({ ...prev, [fileName]: 'idle' }));
+      }, 3000);
+    }
   };
+
+
+  const stats = [
+    { icon: Users, label: "Lives Impacted", value: "10k+", description: "Across Media & development programs" },
+    { icon: Globe, label: "Countries", value: "5+", description: "Strategic partnerships worldwide" },
+    { icon: Award, label: "Years Experience", value: "15+", description: "In evidence-based research" }
+  ];
 
   return (
     <div className={isDark ? 'dark' : ''}>
-     
-
       {/* Hero Section with Background Image */}
       <div className="relative min-h-screen">
         {/* Background Image */}
@@ -56,74 +121,196 @@ export default function HomePage() {
         />
         
         {/* Overlay */}
-        <div className={`absolute inset-0 ${isDark ? 'bg-black/70' : 'bg-black/50'} transition-colors duration-300`} />
+        <div className={`absolute inset-0 ${isDark ? 'bg-black/75' : 'bg-black/60'} transition-colors duration-300`} />
         
         {/* Content */}
-        <div className="relative h-full w-full flex flex-col justify-center items-end md:px-20 px-8 md:pt-28 md:pb-28 pt-52 pb-10 text-white min-h-screen">
-          <div className="md:w-[60%]">
-            <h1 className="text-2xl font-bold leading-8 mb-4">
-              Create the kind of world you want to live in.
-            </h1>
-            <p className="font-thin text-sm font-mona">
-              We use evidence-based research to inform policies and programs that
-              improves lives. Our expertise cuts across various sectors- health,
-              education, nutrition, environment, economic development, civil
-              society, gender, youth and creativity- and geographies to address
-              the full range of human developmental needs. Together, we unleash
-              new ideas and opportunities and strengthen our collective capacity
-              to drive change.
-            </p>
+        <div className="relative h-full w-full flex flex-col justify-center items-end md:px-20 px-6 py-20 text-white min-h-screen">
+          <div className="md:w-[65%] lg:w-[55%] space-y-8">
+            {/* Badge */}
+            <div className="inline-flex items-center px-4 py-2 bg-green-600/20 backdrop-blur-sm border border-green-400/30 rounded-full">
+              <CheckCircle className="w-4 h-4 mr-2 text-green-400" />
+              <span className="text-sm font-medium text-green-100">Evidence-Based Impact Since 2017</span>
+            </div>
+
+            {/* Main Headline */}
+            <div className="space-y-6">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                Create the kind of{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400">
+                  world
+                </span>{' '}
+                you want to live in
+              </h1>
+              
+              <p className="text-lg md:text-xl leading-relaxed text-gray-200 font-light max-w-2xl">
+                We transform communities through evidence-based research and strategic communication. 
+                Our expertise spans health, education, nutrition, and social development to address 
+                the full spectrum of human developmental needs.
+              </p>
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <button className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center group">
+                Explore Our Impact
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+              <button className="border-2 border-white/30 hover:border-white/50 text-white px-8 py-4 rounded-lg font-semibold backdrop-blur-sm hover:bg-white/10 transition-all duration-300">
+                Download Resources
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Section */}
+      <div className={`py-20 transition-colors duration-300 ${
+        isDark 
+          ? 'bg-gray-900 text-white' 
+          : 'bg-gray-50 text-gray-900'
+      }`}>
+        <div className="max-w-7xl mx-auto px-6 md:px-20">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center space-y-4">
+                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full ${
+                  isDark ? 'bg-green-600/20' : 'bg-green-100'
+                }`}>
+                  <stat.icon className={`w-8 h-8 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
+                </div>
+                <div>
+                  <h3 className="text-3xl md:text-4xl font-bold text-green-600">{stat.value}</h3>
+                  <p className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{stat.label}</p>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{stat.description}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Downloads Section */}
-      <div className={`space-y-6 py-12 px-8 md:px-24 transition-colors duration-300 ${
+      <div className={`py-20 transition-colors duration-300 ${
         isDark 
-          ? 'bg-gray-900 text-white' 
+          ? 'bg-gray-800 text-white' 
           : 'bg-white text-gray-900'
       }`}>
-        {downloadItems.map((item, index) => (
-          <div key={index} className="py-6">
-            <h3 className={`md:text-lg text-sm font-bold font-mona ${
+        <div className="max-w-7xl mx-auto px-6 md:px-20">
+          {/* Section Header */}
+          <div className="text-center mb-16">
+            <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${
               isDark ? 'text-white' : 'text-gray-900'
             }`}>
-              {item.title}
-            </h3>
-            <p className={`text-sm font-mona font-semibold mt-2 ${
-              isDark ? 'text-gray-300' : 'text-gray-700'
+              Resources & Publications
+            </h2>
+            <p className={`text-lg max-w-3xl mx-auto ${
+              isDark ? 'text-gray-300' : 'text-gray-600'
             }`}>
-              {item.description}
+              Access our comprehensive collection of research papers, company profiles, 
+              and strategic communication resources
             </p>
-            <div className={`flex items-center justify-between mt-4 p-4 rounded-md border transition-colors duration-300 ${
-              isDark 
-                ? 'border-gray-700 bg-gray-800' 
-                : 'border-gray-200 bg-white'
-            }`}>
-              <div className="flex items-center">
-                <FaFilePdf color="red" />
-                <div className="ml-4">
-                  <p className={`text-sm font-black font-mona ${
-                    isDark ? 'text-white' : 'text-gray-900'
-                  }`}>
-                    {item.fileName}
-                  </p>
-                  <p className={`text-[10px] font-black font-mona ${
-                    isDark ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    {item.fileSize}
-                  </p>
+          </div>
+
+          {/* Download Items */}
+          <div className="space-y-8">
+            {downloadItems.map((item, index) => (
+              <div key={index} className={`p-8 rounded-2xl border transition-all duration-300 hover:shadow-lg ${
+                isDark 
+                  ? 'border-gray-700 bg-gray-900 hover:shadow-gray-900/20' 
+                  : 'border-gray-200 bg-white hover:shadow-gray-200/50'
+              }`}>
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-6">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        isDark 
+                          ? 'bg-green-600/20 text-green-400' 
+                          : 'bg-green-100 text-green-600'
+                      }`}>
+                        {item.category}
+                      </span>
+                      <span className={`text-xs ${
+                        isDark ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        Updated {item.lastUpdated}
+                      </span>
+                    </div>
+                    <h3 className={`text-xl md:text-2xl font-bold mb-3 ${
+                      isDark ? 'text-white' : 'text-gray-900'
+                    }`}>
+                      {item.title}
+                    </h3>
+                    <p className={`text-base leading-relaxed ${
+                      isDark ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* File Info & Actions */}
+                <div className={`flex items-center justify-between p-6 rounded-xl border ${
+                  isDark 
+                    ? 'border-gray-700 bg-gray-800' 
+                    : 'border-gray-100 bg-gray-50'
+                }`}>
+                  <div className="flex items-center">
+                    <div className="p-3 bg-red-500/10 rounded-lg mr-4">
+                      <FaFilePdf className="w-6 h-6 text-red-500" />
+                    </div>
+                    <div>
+                      <p className={`font-semibold ${
+                        isDark ? 'text-white' : 'text-gray-900'
+                      }`}>
+                        {item.fileName}.pdf
+                      </p>
+                   
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                 
+                    
+                    <button 
+                      onClick={() => handleDownload(item.fileName)}
+                      disabled={downloadStatus[item.fileName] === 'downloading'}
+                      className={`px-6 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 ${
+                        downloadStatus[item.fileName] === 'success'
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : downloadStatus[item.fileName] === 'error'
+                          ? 'bg-red-600 hover:bg-red-700 text-white'
+                          : 'bg-green-600 hover:bg-green-700 text-white'
+                      } ${downloadStatus[item.fileName] === 'downloading' ? 'opacity-75 cursor-not-allowed' : ''}`}
+                    >
+                      {downloadStatus[item.fileName] === 'downloading' ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Downloading...
+                        </>
+                      ) : downloadStatus[item.fileName] === 'success' ? (
+                        <>
+                          <CheckCircle className="w-4 h-4" />
+                          Downloaded
+                        </>
+                      ) : downloadStatus[item.fileName] === 'error' ? (
+                        <>
+                          <FaDownload className="w-4 h-4" />
+                          Retry Download
+                        </>
+                      ) : (
+                        <>
+                          <FaDownload className="w-4 h-4" />
+                          Download
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
-              <button 
-                onClick={() => handleDownload(item.fileName)}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-md shadow font-mona font-semibold transition-colors duration-300"
-              >
-                Download
-              </button>
-            </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );

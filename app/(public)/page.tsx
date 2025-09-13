@@ -27,7 +27,7 @@ function HeroSection() {
     {
       title: "Transforming Narratives, Elevating Impact",
       description: "Empowering your brand with strategic communication and innovative media solutions that drive meaningful change across communities and industries.",
-      image: "/images/heroBg.png",
+      image: "/images/heroBg.svg",
       cta: "Discover Our Solutions"
     },
     {
