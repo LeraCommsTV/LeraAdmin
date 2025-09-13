@@ -4,18 +4,18 @@ import { ProjectDetail } from '../../types';
 
 interface CircularProjectCardProps {
   project: ProjectDetail;
-  isDarkMode: boolean;
+  isDark: boolean;
   displayMode: 'grid' | 'list';
 }
 
 export const CircularProjectCard: React.FC<CircularProjectCardProps> = ({
   project,
-  isDarkMode,
+  isDark,
   displayMode,
 }) => {
   const cardClasses = displayMode === 'grid'
-    ? `rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-105 ${isDarkMode ? "bg-gray-800" : "bg-white"}`
-    : `flex items-center p-4 rounded-xl shadow-lg transition-all duration-300 ${isDarkMode ? "bg-gray-800" : "bg-white"}`;
+    ? `rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-105 ${isDark ? "bg-gray-800" : "bg-white"}`
+    : `flex items-center p-4 rounded-xl shadow-lg transition-all duration-300 ${isDark ? "bg-gray-800" : "bg-white"}`;
 
   const imageClasses = displayMode === 'grid' 
     ? "w-full h-48 overflow-hidden rounded-t-xl" 
@@ -34,13 +34,13 @@ export const CircularProjectCard: React.FC<CircularProjectCardProps> = ({
       )}
       <div className={displayMode === 'grid' ? "p-6" : "p-4 flex-grow flex items-center justify-between"}>
         <div>
-          <h3 className={`font-bold ${displayMode === 'grid' ? 'text-xl' : 'text-lg'} ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+          <h3 className={`font-bold ${displayMode === 'grid' ? 'text-xl' : 'text-lg'} ${isDark ? "text-white" : "text-gray-900"}`}>
             {project.title}
           </h3>
-          <p className={`text-sm mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+          <p className={`text-sm mb-2 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
             {project.description}
           </p>
-          <div className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+          <div className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
             <p><strong>Location:</strong> {project.location}</p>
           </div>
         </div>

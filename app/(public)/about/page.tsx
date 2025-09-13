@@ -1,25 +1,31 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Target, Eye, Users, Lightbulb, Heart, Award, Zap, Sun, Moon } from "lucide-react";
+import { Target, Eye, Users, Lightbulb, Heart, Award, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import { useTheme } from '@/context/ThemeContext';
 
 // AboutHome Component
 const AboutHome = () => {
   return (
     <motion.div
-      className="about-home text-white flex md:justify-center justify-start items-end pt-28 md:px-28 px-8"
+      className="about-home text-white flex flex-col md:flex-row md:justify-center justify-start items-end pt-12 md:pt-28 px-4 sm:px-8 md:px-28 min-h-[500px] md:min-h-[600px]"
+      style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1920')`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
     >
-      <div className="pt-12">
+      <div className="w-full md:w-auto pt-8 md:pt-12">
         {/* About Header */}
-        <div>
+        <div className="text-left md:text-center mb-8 md:mb-0">
           <motion.h2
-            className="text-3xl md:text-4xl font-light mb-2 md:text-center text-left"
+            className="text-2xl sm:text-3xl md:text-4xl font-light mb-2 leading-tight"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
@@ -27,7 +33,7 @@ const AboutHome = () => {
             About Lera
           </motion.h2>
           <motion.p
-            className="leading-relaxed max-w-3xl mx-auto md:text-center text-left font-light text-sm"
+            className="leading-relaxed max-w-3xl mx-auto text-sm sm:text-base font-light tracking-wide"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.6 }}
@@ -41,79 +47,80 @@ const AboutHome = () => {
             service delivery
           </motion.p>
         </div>
-        {/* Bottom */}
+        {/* Bottom Mission/Vision */}
         <motion.div
-          className="relative max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-t-white py-8 mt-14"
-          style={{
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-          }}
+          className="w-full relative container mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 border-t border-t-white/80 py-6 sm:py-8 mt-8 sm:mt-14 bg-black/50 rounded-lg"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.8 }}
         >
           {/* Mission Section */}
-          <div>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center py-2">
             <motion.div
-              className="flex gap-4 items-center"
+              className="flex-shrink-0"
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.8, duration: 0.6 }}
             >
               <div
-                className="w-12 h-12 text-white rounded-full flex items-center justify-center"
+                className="w-10 h-10 sm:w-12 sm:h-12 text-white rounded-full flex items-center justify-center flex-shrink-0"
                 style={{
                   backgroundColor: "rgba(255, 255, 255, 0.2)",
                 }}
               >
-                <Target size={30} />
+                <Target size={24} className="sm:w-6 sm:h-6" />
               </div>
-              <h3 className="text-xl font-light">
-                Our <br /> Mission
-              </h3>
             </motion.div>
-            <motion.p
-              className="mt-2 font-light text-xs"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1, duration: 0.6 }}
-            >
-              To be the leading strategic communications and media consulting
-              company in Nigeria, driving impactful narratives and innovative
-              media solutions that inspire, inform, and transform societies.
-            </motion.p>
+            <div className="flex-1">
+              <h3 className="text-lg sm:text-xl font-light leading-tight">
+                Our <br className="sm:hidden" /> Mission
+              </h3>
+              <motion.p
+                className="mt-1 sm:mt-2 font-light text-xs sm:text-sm leading-relaxed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1, duration: 0.6 }}
+              >
+                To be the leading strategic communications and media consulting
+                company in Nigeria, driving impactful narratives and innovative
+                media solutions that inspire, inform, and transform societies.
+              </motion.p>
+            </div>
           </div>
 
           {/* Vision Section */}
-          <div>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center py-2">
             <motion.div
-              className="flex gap-4 items-center"
+              className="flex-shrink-0"
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.8, duration: 0.6 }}
             >
               <div
-                className="w-12 h-12 text-white rounded-full flex items-center justify-center"
+                className="w-10 h-10 sm:w-12 sm:h-12 text-white rounded-full flex items-center justify-center flex-shrink-0"
                 style={{
                   backgroundColor: "rgba(255, 255, 255, 0.2)",
                 }}
               >
-                <Eye size={30} />
+                <Eye size={24} className="sm:w-6 sm:h-6" />
               </div>
-              <h3 className="text-xl font-light">
-                Our <br /> Vision
-              </h3>
             </motion.div>
-            <motion.p
-              className="mt-2 font-light text-xs"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1, duration: 0.6 }}
-            >
-              Leveraging technology and storytelling to engage audiences,
-              foster social progress, build impactful partnerships, and
-              continuously develop our team's talent for excellence,
-              innovation, and integrity.
-            </motion.p>
+            <div className="flex-1">
+              <h3 className="text-lg sm:text-xl font-light leading-tight">
+                Our <br className="sm:hidden" /> Vision
+              </h3>
+              <motion.p
+                className="mt-1 sm:mt-2 font-light text-xs sm:text-sm leading-relaxed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1, duration: 0.6 }}
+              >
+                Leveraging technology and storytelling to engage audiences,
+                foster social progress, build impactful partnerships, and
+                continuously develop our team's talent for excellence,
+                innovation, and integrity.
+              </motion.p>
+            </div>
           </div>
         </motion.div>
       </div>
@@ -123,24 +130,25 @@ const AboutHome = () => {
 
 // CompanyValues Component
 const CompanyValues = () => {
+  const { isDark } = useTheme();
   const values = [
     {
-      icon: <Lightbulb size={30} />,
+      icon: <Lightbulb size={24} className="sm:w-6 sm:h-6" />,
       title: "Innovation",
       description: "We are creative, always learning, versatile, and cutting edge.",
     },
     {
-      icon: <Heart size={30} />,
+      icon: <Heart size={24} className="sm:w-6 sm:h-6" />,
       title: "Integrity",
       description: "We maintain the highest ethical standards in all our communications.",
     },
     {
-      icon: <Award size={30} />,
+      icon: <Award size={24} className="sm:w-6 sm:h-6" />,
       title: "Excellence",
       description: "We deliver outstanding results that exceed client expectations.",
     },
     {
-      icon: <Zap size={30} />,
+      icon: <Zap size={24} className="sm:w-6 sm:h-6" />,
       title: "Impact",
       description: "We create meaningful change through strategic communication.",
     },
@@ -148,14 +156,16 @@ const CompanyValues = () => {
 
   return (
     <motion.div
-      className="bg-green-600 dark:bg-green-800 text-white py-12 md:px-16 px-8"
+      className={`text-white py-8 sm:py-12 px-4 sm:px-8 md:px-16 transition-colors duration-300 ${
+        isDark ? 'bg-green-800' : 'bg-green-600'
+      }`}
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.8 }}
     >
       <motion.h2
-        className="md:text-center text-xl font-light mb-8"
+        className="text-center text-xl sm:text-2xl md:text-3xl font-light mb-6 sm:mb-8 tracking-wide"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
@@ -163,26 +173,28 @@ const CompanyValues = () => {
       >
         Company Values
       </motion.h2>
-      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 items-center justify-center">
+      <div className="container mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8 items-start justify-items-center">
         {values.map((value, index) => (
           <motion.div
             key={index}
-            className={`px-5 ${index !== 0 && "md:border-l md:border-l-white"}`}
+            className={`w-full px-3 sm:px-5 text-center ${
+              index !== 0 && "hidden md:block border-l border-white/50"
+            }`}
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 * (index + 1), duration: 0.6 }}
           >
             <div
-              className="w-14 h-14 text-white rounded-full flex items-center justify-center mb-4"
+              className="w-12 h-12 sm:w-14 sm:h-14 text-white rounded-full flex items-center justify-center mb-3 sm:mb-4 mx-auto"
               style={{
                 backgroundColor: "rgba(255, 255, 255, 0.2)",
               }}
             >
               {value.icon}
             </div>
-            <h3 className="text-lg font-bold">{value.title}</h3>
-            <p className="text-xs mt-2">{value.description}</p>
+            <h3 className="text-base sm:text-lg font-bold mb-1 sm:mb-2 leading-tight">{value.title}</h3>
+            <p className="text-xs sm:text-sm leading-relaxed">{value.description}</p>
           </motion.div>
         ))}
       </div>
@@ -192,6 +204,7 @@ const CompanyValues = () => {
 
 // Team Component (with Carousel)
 const Team = () => {
+  const { isDark } = useTheme();
   const teamMembers = [
     {
       name: "John Doe",
@@ -214,21 +227,31 @@ const Team = () => {
     dots: true,
     infinite: true,
     speed: 500,
-    slidesToShow: 3,
+    slidesToShow: 1, // Start with 1 for mobile
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 3000,
+    arrows: false, // Hide arrows on mobile for cleaner look
     responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 2,
-        },
-      },
       {
         breakpoint: 640,
         settings: {
           slidesToShow: 1,
+          arrows: false,
+        },
+      },
+      {
+        breakpoint: 768,
+        settings: {
+          slidesToShow: 2,
+          arrows: true,
+        },
+      },
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 3,
+          arrows: true,
         },
       },
     ],
@@ -236,15 +259,17 @@ const Team = () => {
 
   return (
     <motion.div
-      className="bg-white dark:bg-gray-900 py-16 md:px-16 px-8"
+      className={`py-12 sm:py-16 px-4 sm:px-8 md:px-16 transition-colors duration-300 ${
+        isDark ? 'bg-gray-900' : 'bg-white'
+      }`}
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.8 }}
     >
-      <div className="max-w-6xl mx-auto">
+      <div className="container mx-auto max-w-6xl">
         <motion.h2
-          className="text-3xl md:text-4xl font-light mb-2 text-center text-gray-800 dark:text-white"
+          className="text-2xl sm:text-3xl md:text-4xl font-light mb-2 text-center tracking-wide"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -253,7 +278,9 @@ const Team = () => {
           Our Team
         </motion.h2>
         <motion.p
-          className="text-center text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto"
+          className={`text-center text-sm sm:text-base mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed ${
+            isDark ? 'text-gray-300' : 'text-gray-600'
+          }`}
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -261,26 +288,34 @@ const Team = () => {
         >
           Meet the talented professionals who bring our vision to life through creativity, expertise, and dedication.
         </motion.p>
-        <Slider {...settings}>
-          {teamMembers.map((member, index) => (
-            <motion.div
-              key={index}
-              className="px-4"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center h-full">
-                <div className="w-20 h-20 bg-green-600 dark:bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users size={40} className="text-white" />
+        <div className="px-2 sm:px-4"> {/* Add padding for mobile slider */}
+          <Slider {...settings}>
+            {teamMembers.map((member, index) => (
+              <motion.div
+                key={index}
+                className="px-2 sm:px-4"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6 }}
+              >
+                <div className={`rounded-lg shadow-lg p-4 sm:p-6 text-center h-full transition-colors duration-300 ${
+                  isDark ? 'bg-gray-800' : 'bg-white'
+                }`}>
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-600 dark:bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-4">
+                    <Users size={32} className="sm:w-10 sm:h-10 text-white" />
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-semibold mb-2 leading-tight">{member.name}</h3>
+                  <p className={`font-medium mb-3 text-sm sm:text-base ${
+                    isDark ? 'text-green-400' : 'text-green-600'
+                  }`}>{member.position}</p>
+                  <p className={`text-sm leading-relaxed ${
+                    isDark ? 'text-gray-300' : 'text-gray-600'
+                  }`}>{member.bio}</p>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">{member.name}</h3>
-                <p className="text-green-600 dark:text-green-400 font-medium mb-3">{member.position}</p>
-                <p className="text-gray-600 dark:text-gray-300 text-sm">{member.bio}</p>
-              </div>
-            </motion.div>
-          ))}
-        </Slider>
+              </motion.div>
+            ))}
+          </Slider>
+        </div>
       </div>
     </motion.div>
   );
@@ -288,58 +323,14 @@ const Team = () => {
 
 // Main About Page Component
 export default function AboutPage() {
-  const [theme, setTheme] = useState<"dark" | "light">("light");
-
-  // Initialize theme from localStorage
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "dark" | "light" | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.classList.toggle("dark", savedTheme === "dark");
-    } else {
-      localStorage.setItem("theme", "light");
-      document.documentElement.classList.remove("dark");
-    }
-  }, []);
-
-  // Toggle theme
-  const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.classList.toggle("dark", newTheme === "dark");
-  };
+  const { isDark } = useTheme();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
-      {/* Theme Toggle Button - Centered at top */}
-      <motion.div
-        className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <button
-          onClick={toggleTheme}
-          className="p-3 rounded-lg bg-green-600 text-white shadow-lg hover:bg-green-700 transition-colors duration-300"
-          aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
-        >
-          {theme === "light" ? <Moon size={24} /> : <Sun size={24} />}
-        </button>
-      </motion.div>
-
+    <div className={`min-h-screen transition-colors duration-200 ${
+      isDark ? 'bg-gray-900' : 'bg-white'
+    }`}>
       {/* Hero Section with Background Image */}
-      <div
-        className="relative"
-        style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1920')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          minHeight: "600px",
-        }}
-      >
-        <AboutHome />
-      </div>
+      <AboutHome />
 
       {/* Company Values Section */}
       <CompanyValues />
@@ -349,7 +340,9 @@ export default function AboutPage() {
 
       {/* Call to Action Section */}
       <motion.div
-        className="bg-gray-900 dark:bg-gray-800 text-white py-16 px-8 text-center"
+        className={`py-12 sm:py-16 px-4 sm:px-8 text-center transition-colors duration-300 ${
+          isDark ? 'bg-gray-800 text-white' : 'bg-gray-900 text-white'
+        }`}
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -357,7 +350,7 @@ export default function AboutPage() {
       >
         <div className="max-w-4xl mx-auto">
           <motion.h2
-            className="text-3xl font-light mb-4"
+            className="text-2xl sm:text-3xl font-light mb-4 leading-tight"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -366,7 +359,7 @@ export default function AboutPage() {
             Ready to Transform Your Communications?
           </motion.h2>
           <motion.p
-            className="text-lg mb-8 text-gray-300"
+            className="text-base sm:text-lg mb-6 sm:mb-8 text-gray-300 leading-relaxed"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -375,7 +368,7 @@ export default function AboutPage() {
             Let's work together to create impactful narratives that drive results for your organization.
           </motion.p>
           <motion.button
-            className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-300"
+            className="bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white font-semibold py-3 px-6 sm:px-8 rounded-lg transition-all duration-300"
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}

@@ -230,7 +230,7 @@ const ProjectManagementPage = () => {
               currentPage={projectPagination.currentPage}
               totalPages={projectPagination.totalPages}
               onPageChange={projectPagination.handlePageChange}
-              isDarkMode={isDarkMode}
+              isDark={isDarkMode}
               variant="blue"
             />
           </div>

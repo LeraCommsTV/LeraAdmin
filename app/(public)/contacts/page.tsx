@@ -1,50 +1,9 @@
 "use client"
 import React, { useState, useEffect } from "react"
-import { MapPin, Phone, Mail, Clock, Send, CheckCircle, Sun, Moon, ChevronLeft, ChevronRight, Star } from "lucide-react"
+import { MapPin, Phone, Mail, Clock, Send, CheckCircle, ChevronLeft, ChevronRight, Star } from "lucide-react"
 import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore"
 import { db } from "@/lib/firebase"
-
-
-// Theme Context
-const ThemeContext = React.createContext<{ isDark: boolean; toggleTheme: () => void }>({
-  isDark: false,
-  toggleTheme: () => {},
-})
-
-const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isDark, setIsDark] = useState(false)
-
-  useEffect(() => {
-    // Check for saved theme preference or default to system preference
-    const savedTheme = localStorage.getItem("theme")
-    if (savedTheme) {
-      setIsDark(savedTheme === "dark")
-    } else {
-      setIsDark(window.matchMedia("(prefers-color-scheme: dark)").matches)
-    }
-  }, [])
-
-  useEffect(() => {
-    // Apply theme to document
-    if (isDark) {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-    }
-    // Save theme preference
-    localStorage.setItem("theme", isDark ? "dark" : "light")
-  }, [isDark])
-
-  const toggleTheme = () => {
-    setIsDark(!isDark)
-  }
-
-  return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
-      <div className={isDark ? "dark" : ""}>{children}</div>
-    </ThemeContext.Provider>
-  )
-}
+import { useTheme } from '@/context/ThemeContext';
 
 // Animation Hook
 const useInView = () => {
@@ -70,36 +29,9 @@ const useInView = () => {
   return [setElement, isInView] as const
 }
 
-// Theme Toggle Component - Fixed positioning to be truly centered
-const ThemeToggle = () => {
-  const { isDark, toggleTheme } = React.useContext(ThemeContext)
-
-  return (
-    <button
-      onClick={toggleTheme}
-      className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 p-3 rounded-lg bg-green-600 dark:bg-green-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border-2 border-white dark:border-green-800"
-      aria-label="Toggle theme"
-    >
-      <div className="relative w-5 h-5">
-        <Sun
-          size={20}
-          className={`absolute inset-0 transform transition-all duration-500 ${
-            isDark ? "rotate-180 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
-          }`}
-        />
-        <Moon
-          size={20}
-          className={`absolute inset-0 transform transition-all duration-500 ${
-            isDark ? "rotate-0 scale-100 opacity-100" : "-rotate-180 scale-0 opacity-0"
-          }`}
-        />
-      </div>
-    </button>
-  )
-}
-
 // Testimonials Carousel Component
 const TestimonialsCarousel = () => {
+  const { isDark } = useTheme();
   const [currentSlide, setCurrentSlide] = useState(0)
   const [setRef, isInView] = useInView()
 
@@ -216,6 +148,7 @@ const TestimonialsCarousel = () => {
 
 // Services Carousel Component
 const ServicesCarousel = () => {
+  const { isDark } = useTheme();
   const [currentSlide, setCurrentSlide] = useState(0)
   const [setRef, isInView] = useInView()
 
@@ -313,6 +246,7 @@ const ServicesCarousel = () => {
 
 // Google Maps Component
 const GoogleMap = () => {
+  const { isDark } = useTheme();
   const [setRef, isInView] = useInView()
 
   return (
@@ -367,6 +301,7 @@ const ContactHome = () => {
 
 // Contact Form Component with Firebase Integration
 const ContactForm = () => {
+  const { isDark } = useTheme();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -438,7 +373,9 @@ const ContactForm = () => {
   }
 
   return (
-    <div className="py-20 px-6 md:px-12 lg:px-20 bg-gray-50 dark:bg-gray-900 transition-colors duration-500">
+    <div className={`py-20 px-6 md:px-12 lg:px-20 transition-colors duration-500 ${
+      isDark ? 'bg-gray-900' : 'bg-gray-50'
+    }`}>
       <div className="max-w-7xl mx-auto">
         <div
           ref={setRef}
@@ -447,32 +384,50 @@ const ContactForm = () => {
           }`}
         >
           <div className="inline-block mb-6">
-            <span className="px-6 py-3 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full text-sm font-bold uppercase tracking-wide">
+            <span className={`px-6 py-3 rounded-full text-sm font-bold uppercase tracking-wide ${
+              isDark 
+                ? 'bg-green-900 text-green-300' 
+                : 'bg-green-100 text-green-700'
+            }`}>
               Connect with us
             </span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-gray-800 dark:text-white">Get in Touch</h1>
+          <h1 className={`text-4xl md:text-5xl font-bold mb-6 ${
+            isDark ? 'text-white' : 'text-gray-800'
+          }`}>Get in Touch</h1>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
           {/* Form Section */}
           <div
-            className={`bg-white dark:bg-gray-800 p-8 lg:p-10 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 transform transition-all duration-1000 delay-200 ${
-              isInView ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            }`}
+            className={`p-8 lg:p-10 rounded-2xl shadow-2xl border transform transition-all duration-1000 delay-200 ${
+              isDark 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white border-gray-100'
+            } ${isInView ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}
           >
-            <h2 className="text-2xl font-bold mb-8 text-gray-800 dark:text-white">Send us a message</h2>
+            <h2 className={`text-2xl font-bold mb-8 ${
+              isDark ? 'text-white' : 'text-gray-800'
+            }`}>Send us a message</h2>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
+              <div className={`mb-6 p-4 border rounded-lg ${
+                isDark 
+                  ? 'bg-red-900/20 border-red-800' 
+                  : 'bg-red-50 border-red-200'
+              }`}>
+                <p className={`text-sm ${
+                  isDark ? 'text-red-400' : 'text-red-600'
+                }`}>{error}</p>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="group">
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  <label className={`block text-sm font-semibold mb-3 ${
+                    isDark ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
                     First Name *
                   </label>
                   <input
@@ -481,12 +436,18 @@ const ContactForm = () => {
                     value={formData.firstName}
                     onChange={handleInputChange}
                     required
-                    className="w-full p-4 rounded-xl bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-white focus:outline-none focus:ring-4 focus:ring-green-500/20 focus:border-green-500 transition-all duration-300 group-hover:border-gray-300 dark:group-hover:border-gray-500"
+                    className={`w-full p-4 rounded-xl border-2 text-gray-700 dark:text-white focus:outline-none focus:ring-4 focus:ring-green-500/20 focus:border-green-500 transition-all duration-300 group-hover:border-gray-300 ${
+                      isDark 
+                        ? 'bg-gray-700 border-gray-600 dark:group-hover:border-gray-500' 
+                        : 'bg-gray-50 border-gray-200'
+                    }`}
                     placeholder="Enter your first name"
                   />
                 </div>
                 <div className="group">
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  <label className={`block text-sm font-semibold mb-3 ${
+                    isDark ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
                     Last Name *
                   </label>
                   <input
@@ -495,14 +456,20 @@ const ContactForm = () => {
                     value={formData.lastName}
                     onChange={handleInputChange}
                     required
-                    className="w-full p-4 rounded-xl bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-white focus:outline-none focus:ring-4 focus:ring-green-500/20 focus:border-green-500 transition-all duration-300 group-hover:border-gray-300 dark:group-hover:border-gray-500"
+                    className={`w-full p-4 rounded-xl border-2 text-gray-700 dark:text-white focus:outline-none focus:ring-4 focus:ring-green-500/20 focus:border-green-500 transition-all duration-300 group-hover:border-gray-300 ${
+                      isDark 
+                        ? 'bg-gray-700 border-gray-600 dark:group-hover:border-gray-500' 
+                        : 'bg-gray-50 border-gray-200'
+                    }`}
                     placeholder="Enter your last name"
                   />
                 </div>
               </div>
 
               <div className="group">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                <label className={`block text-sm font-semibold mb-3 ${
+                  isDark ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Email Address *
                 </label>
                 <input
@@ -511,20 +478,30 @@ const ContactForm = () => {
                   value={formData.email}
                   onChange={handleInputChange}
                   required
-                  className="w-full p-4 rounded-xl bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-white focus:outline-none focus:ring-4 focus:ring-green-500/20 focus:border-green-500 transition-all duration-300 group-hover:border-gray-300 dark:group-hover:border-gray-500"
+                  className={`w-full p-4 rounded-xl border-2 text-gray-700 dark:text-white focus:outline-none focus:ring-4 focus:ring-green-500/20 focus:border-green-500 transition-all duration-300 group-hover:border-gray-300 ${
+                    isDark 
+                      ? 'bg-gray-700 border-gray-600 dark:group-hover:border-gray-500' 
+                      : 'bg-gray-50 border-gray-200'
+                  }`}
                   placeholder="Enter your email address"
                 />
               </div>
 
               <div className="group">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Message *</label>
+                <label className={`block text-sm font-semibold mb-3 ${
+                  isDark ? 'text-gray-300' : 'text-gray-700'
+                }`}>Message *</label>
                 <textarea
                   name="message"
                   value={formData.message}
                   onChange={handleInputChange}
                   required
                   rows={6}
-                  className="w-full p-4 rounded-xl bg-gray-50 dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-white focus:outline-none focus:ring-4 focus:ring-green-500/20 focus:border-green-500 transition-all duration-300 resize-none group-hover:border-gray-300 dark:group-hover:border-gray-500"
+                  className={`w-full p-4 rounded-xl border-2 text-gray-700 dark:text-white focus:outline-none focus:ring-4 focus:ring-green-500/20 focus:border-green-500 transition-all duration-300 resize-none group-hover:border-gray-300 ${
+                    isDark 
+                      ? 'bg-gray-700 border-gray-600 dark:group-hover:border-gray-500' 
+                      : 'bg-gray-50 border-gray-200'
+                  }`}
                   placeholder="Tell us about your project or inquiry..."
                 />
               </div>
@@ -553,12 +530,20 @@ const ContactForm = () => {
           <div className="space-y-8">
             {/* Company Info Card */}
             <div
-              className={`bg-white dark:bg-gray-800 p-8 lg:p-10 border-2 border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl transform transition-all duration-1000 delay-300 ${
-                isInView ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-              }`}
+              className={`p-8 lg:p-10 border-2 rounded-2xl shadow-2xl transform transition-all duration-1000 delay-300 ${
+                isDark 
+                  ? 'bg-gray-800 border-gray-700' 
+                  : 'bg-white border-gray-100'
+              } ${isInView ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}
             >
-              <h3 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">About Lera Communications</h3>
-              <p className="text-gray-600 dark:text-gray-300 leading-relaxed border-b border-gray-200 dark:border-gray-700 pb-6 mb-8">
+              <h3 className={`text-2xl font-bold mb-6 ${
+                isDark ? 'text-white' : 'text-gray-800'
+              }`}>About Lera Communications</h3>
+              <p className={`text-sm leading-relaxed border-b pb-6 mb-8 ${
+                isDark 
+                  ? 'text-gray-300 border-gray-700' 
+                  : 'text-gray-600 border-gray-200'
+              }`}>
                 Lera Communications is a strategic and development communications firm based in Nigeria. We offer
                 comprehensive media and communication solutions to drive impactful narratives and innovative strategies
                 for organizations across various sectors.
@@ -576,12 +561,20 @@ const ContactForm = () => {
                   },
                 ].map((item, index) => (
                   <div key={index} className="flex items-start gap-4 group">
-                    <div className="p-3 rounded-full bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 group-hover:bg-green-200 dark:group-hover:bg-green-800 transition-colors duration-300">
+                    <div className={`p-3 rounded-full ${
+                      isDark 
+                        ? 'bg-green-900 text-green-400 group-hover:bg-green-800' 
+                        : 'bg-green-100 text-green-600 group-hover:bg-green-200'
+                    } transition-colors duration-300`}>
                       <item.icon size={20} />
                     </div>
                     <div>
-                      <p className="font-bold text-gray-800 dark:text-white mb-1">{item.title}</p>
-                      <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">
+                      <p className={`font-bold mb-1 ${
+                        isDark ? 'text-white' : 'text-gray-800'
+                      }`}>{item.title}</p>
+                      <p className={`text-sm leading-relaxed whitespace-pre-line ${
+                        isDark ? 'text-gray-300' : 'text-gray-600'
+                      }`}>
                         {item.content}
                       </p>
                     </div>
@@ -604,74 +597,90 @@ const ContactForm = () => {
 
 // Main Contact Page Component
 export default function ContactPage() {
+  const { isDark } = useTheme();
+
   return (
-    <ThemeProvider>
-      <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-500">
-        <ThemeToggle />
+    <div className={`min-h-screen transition-colors duration-500 ${
+      isDark ? 'bg-gray-900 text-white' : 'bg-white text-black'
+    }`}>
+      {/* Hero Section */}
+      <ContactHome />
 
-        {/* Hero Section */}
-        <ContactHome />
+      {/* Contact Form and Info */}
+      <ContactForm />
 
-        {/* Contact Form and Info */}
-        <ContactForm />
-
-        {/* Map Section */}
-        <div className="py-20 px-6 md:px-12 lg:px-20 bg-white dark:bg-gray-900 transition-colors duration-500">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-800 dark:text-white mb-6">Visit Our Office</h2>
-              <p className="text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-lg leading-relaxed">
-                Located in the heart of Abuja, our office is easily accessible and we welcome visitors by appointment.
-                Contact us to schedule a meeting.
-              </p>
-            </div>
-            <GoogleMap />
+      {/* Map Section */}
+      <div className={`py-20 px-6 md:px-12 lg:px-20 transition-colors duration-500 ${
+        isDark ? 'bg-gray-900' : 'bg-white'
+      }`}>
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className={`text-4xl font-bold mb-6 ${
+              isDark ? 'text-white' : 'text-gray-800'
+            }`}>Visit Our Office</h2>
+            <p className={`max-w-3xl mx-auto text-lg leading-relaxed ${
+              isDark ? 'text-gray-300' : 'text-gray-600'
+            }`}>
+              Located in the heart of Abuja, our office is easily accessible and we welcome visitors by appointment.
+              Contact us to schedule a meeting.
+            </p>
           </div>
+          <GoogleMap />
         </div>
+      </div>
 
-        {/* FAQ Section */}
-        <div className="bg-gray-50 dark:bg-gray-800 py-20 px-6 md:px-12 lg:px-20 transition-colors duration-500">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-4xl font-bold text-center text-gray-800 dark:text-white mb-16">
-              Frequently Asked Questions
-            </h2>
-            <div className="space-y-6">
-              {[
-                {
-                  question: "What services does Lera Communications offer?",
-                  answer:
-                    "We provide comprehensive strategic communications, media relations, corporate communications, crisis management, content development, and digital media solutions.",
-                },
-                {
-                  question: "How quickly can you respond to communication crises?",
-                  answer:
-                    "We offer 24/7 crisis communication support and can mobilize our team within hours to address urgent communication needs.",
-                },
-                {
-                  question: "Do you work with organizations outside Nigeria?",
-                  answer:
-                    "Yes, while based in Nigeria, we work with clients across Africa and internationally, leveraging our local expertise and global perspective.",
-                },
-              ].map((faq, index) => {
-                const [setRef, isInView] = useInView()
-                return (
-                  <div
-                    key={index}
-                    ref={setRef}
-                    className={`bg-white dark:bg-gray-700 p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-600 hover:shadow-xl transition-all duration-500 transform ${
-                      isInView ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-                    }`}
-                    style={{ transitionDelay: `${index * 100}ms` }}
-                  >
-                    <h3 className="font-bold text-gray-800 dark:text-white mb-3 text-lg">{faq.question}</h3>
-                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{faq.answer}</p>
-                  </div>
-                )
-              })}
-            </div>
+      {/* FAQ Section */}
+      <div className={`py-20 px-6 md:px-12 lg:px-20 transition-colors duration-500 ${
+        isDark ? 'bg-gray-800' : 'bg-gray-50'
+      }`}>
+        <div className="max-w-5xl mx-auto">
+          <h2 className={`text-4xl font-bold text-center mb-16 ${
+            isDark ? 'text-white' : 'text-gray-800'
+          }`}>
+            Frequently Asked Questions
+          </h2>
+          <div className="space-y-6">
+            {[
+              {
+                question: "What services does Lera Communications offer?",
+                answer:
+                  "We provide comprehensive strategic communications, media relations, corporate communications, crisis management, content development, and digital media solutions.",
+              },
+              {
+                question: "How quickly can you respond to communication crises?",
+                answer:
+                  "We offer 24/7 crisis communication support and can mobilize our team within hours to address urgent communication needs.",
+              },
+              {
+                question: "Do you work with organizations outside Nigeria?",
+                answer:
+                  "Yes, while based in Nigeria, we work with clients across Africa and internationally, leveraging our local expertise and global perspective.",
+              },
+            ].map((faq, index) => {
+              const [setRef, isInView] = useInView()
+              return (
+                <div
+                  key={index}
+                  ref={setRef}
+                  className={`p-8 rounded-2xl shadow-lg border hover:shadow-xl transition-all duration-500 transform ${
+                    isDark 
+                      ? 'bg-gray-700 border-gray-600' 
+                      : 'bg-white border-gray-100'
+                  } ${isInView ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}
+                  style={{ transitionDelay: `${index * 100}ms` }}
+                >
+                  <h3 className={`font-bold mb-3 text-lg ${
+                    isDark ? 'text-white' : 'text-gray-800'
+                  }`}>{faq.question}</h3>
+                  <p className={`leading-relaxed ${
+                    isDark ? 'text-gray-300' : 'text-gray-600'
+                  }`}>{faq.answer}</p>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
-    </ThemeProvider>
+    </div>
   )
 }

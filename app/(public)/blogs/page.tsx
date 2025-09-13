@@ -4,6 +4,8 @@ import { Calendar, Clock, ArrowRight, Search, Filter, Sun, Moon, ChevronLeft, Ch
 import { db } from '@/lib/firebase'; // Adjust path to your Firebase config
 import { collection, onSnapshot } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import { useTheme } from '@/context/ThemeContext';
+
 
 // Blog Post Type (aligned with admin)
 type BlogPost = {
@@ -214,8 +216,9 @@ export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { isDark } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -257,10 +260,7 @@ export default function BlogPage() {
   // Dynamic categories from Firestore
   const categories = ['All', ...Array.from(new Set(posts.map(post => post.category)))];
 
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-  };
+
 
   // Filter posts
   const filteredPosts = posts.filter(post => {
@@ -275,15 +275,15 @@ export default function BlogPage() {
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'} flex items-center justify-center`}>
-        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>Loading posts...</p>
+      <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-white'} flex items-center justify-center`}>
+        <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Loading posts...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'} flex items-center justify-center`}>
+      <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-white'} flex items-center justify-center`}>
         <p className="text-red-500">{error}</p>
       </div>
     );
@@ -291,43 +291,34 @@ export default function BlogPage() {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
-      isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'
+      isDark ? 'bg-gray-900 text-white' : 'bg-white text-black'
     }`}>
       {/* Header with Dark Mode Toggle */}
-      <header className="relative">
-        <button
-          onClick={toggleDarkMode}
-          className="fixed top-4 left-60 md:top-4 md:right-160 md:left-auto z-50 p-3 rounded-lg bg-green-600 text-white shadow-lg hover:bg-green-700 transition-colors duration-300 hover:scale-110"
-          aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-        >
-          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
-      </header>
 
       {/* Hero Section */}
       <div className="relative py-16 px-8 mt-8 text-center">
         <div className="max-w-4xl mx-auto">
           <h1 className={`text-4xl md:text-6xl font-light mb-6 animate-fade-in ${
-            isDarkMode ? 'text-white' : 'text-gray-900'
+            isDark ? 'text-white' : 'text-gray-900'
           }`}>
             Latest <span className="text-green-600">Insights</span>
           </h1>
           <p className={`text-xl mb-8 animate-fade-in-delay ${
-            isDarkMode ? 'text-gray-300' : 'text-gray-600'
+            isDark ? 'text-gray-300' : 'text-gray-600'
           }`}>
             Stay updated with our latest news, events, and thought leadership
           </p>
           
           <div className="flex flex-col md:flex-row gap-4 justify-center items-center max-w-2xl mx-auto">
             <div className="relative flex-1 w-full">
-              <Search size={20} className={`absolute left-3 top-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+              <Search size={20} className={`absolute left-3 top-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
               <input
                 type="text"
                 placeholder="Search articles..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:border-green-600 focus:outline-none transition-colors duration-300 ${
-                  isDarkMode 
+                  isDark 
                     ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' 
                     : 'bg-gray-100 border-gray-300 text-gray-900 placeholder-gray-500'
                 }`}
@@ -335,12 +326,12 @@ export default function BlogPage() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <Filter size={20} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} />
+              <Filter size={20} className={isDark ? 'text-gray-400' : 'text-gray-500'} />
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className={`px-4 py-3 border rounded-lg focus:border-green-600 focus:outline-none transition-colors duration-300 ${
-                  isDarkMode 
+                  isDark 
                     ? 'bg-gray-800 border-gray-700 text-white' 
                     : 'bg-gray-100 border-gray-300 text-gray-900'
                 }`}
@@ -360,21 +351,21 @@ export default function BlogPage() {
         {featuredPosts.length > 0 && (
           <div className="mb-16">
             <h2 className={`text-2xl font-light mb-8 text-center ${
-              isDarkMode ? 'text-white' : 'text-gray-900'
+              isDark ? 'text-white' : 'text-gray-900'
             }`}>
               Featured威力
 
               Featured Stories
             </h2>
-            <Carousel posts={featuredPosts} isDark={isDarkMode} />
+            <Carousel posts={featuredPosts} isDark={isDark} />
           </div>
         )}
 
         {otherPosts.length > 0 && (
           <>
-            <div className={`border-t pt-16 mb-8 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className={`border-t pt-16 mb-8 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
               <h2 className={`text-2xl font-light mb-8 text-center ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
+                isDark ? 'text-white' : 'text-gray-900'
               }`}>
                 More Stories
               </h2>
@@ -382,7 +373,7 @@ export default function BlogPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {otherPosts.map((post) => (
                 <div key={post.id} className="animate-fade-in-up">
-                  <RegularBlogCard post={post} isDark={isDarkMode} />
+                  <RegularBlogCard post={post} isDark={isDark} />
                 </div>
               ))}
             </div>
@@ -391,10 +382,10 @@ export default function BlogPage() {
 
         {filteredPosts.length === 0 && (
           <div className="text-center py-16">
-            <h3 className={`text-2xl font-light mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h3 className={`text-2xl font-light mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
               No articles found
             </h3>
-            <p className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
+            <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>
               Try adjusting your search or filter criteria
             </p>
           </div>
@@ -403,13 +394,13 @@ export default function BlogPage() {
 
       {/* Newsletter Section */}
       <div className={`py-16 px-8 transition-colors duration-300 ${
-        isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
+        isDark ? 'bg-gray-800' : 'bg-gray-50'
       }`}>
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className={`text-3xl font-light mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h2 className={`text-3xl font-light mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Stay In The Loop
           </h2>
-          <p className={`mb-8 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+          <p className={`mb-8 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
             Subscribe to our newsletter for the latest updates and insights
           </p>
           <div className="flex flex-col md:flex-row gap-4 max-w-md mx-auto">
@@ -417,7 +408,7 @@ export default function BlogPage() {
               type="email"
               placeholder="Enter your email"
               className={`flex-1 px-4 py-3 border rounded-lg focus:border-green-600 focus:outline-none transition-colors duration-300 ${
-                isDarkMode 
+                isDark 
                   ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                   : 'bg-gray-100 border-gray-300 text-gray-900 placeholder-gray-500'
               }`}

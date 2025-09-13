@@ -3,15 +3,15 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { ProjectDetail } from '@/types';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Pagination } from '@/components/ui/Pagination';
 import { CircularProjectCard } from '@/components/cards/CircularProjectCard';
 import { usePagination } from '@/hooks/usePagination';
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
+import { useTheme } from '@/context/ThemeContext';
 
 const ProjectViewPage = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { isDark } = useTheme();
   const [projects, setProjects] = useState<ProjectDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +43,6 @@ const ProjectViewPage = () => {
     fetchData();
   }, []);
 
-  const toggleTheme = () => setIsDarkMode(!isDarkMode);
-
   const handleProjectClick = (project: ProjectDetail) => {
     setSelectedProject(project);
   };
@@ -54,37 +52,42 @@ const ProjectViewPage = () => {
   };
 
   return (
-    <div className={isDarkMode ? "dark" : ""}>
-      <main className={`min-h-screen transition-colors duration-300 ${isDarkMode ? "bg-gray-900" : "bg-white"}`}>
+    <div className={isDark ? "dark" : ""}>
+      <main className={`min-h-screen transition-colors duration-300 ${isDark ? "bg-gray-900" : "bg-white"}`}>
         {/* Header Section */}
-        <section className={`px-8 md:px-20 pt-24 pb-16 transition-colors duration-300 ${isDarkMode ? "bg-gray-800" : "bg-gray-100"}`}>
+        <section className={`px-8 md:px-20 pt-24 pb-16 transition-colors duration-300 ${isDark ? "bg-gray-800" : "bg-gray-100"}`}>
           <div className="relative max-w-6xl mx-auto">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className={`text-4xl font-bold mb-4 ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+                <h1 className={`text-4xl font-bold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>
                   Our Projects
                 </h1>
-                <p className={`text-lg ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+                <p className={`text-lg ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                   Explore our collection of projects
                 </p>
               </div>
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setDisplayMode(displayMode === 'grid' ? 'list' : 'grid')}
-                  className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-all duration-300"
+                  className={`px-4 py-2 rounded-lg text-white transition-all duration-300 ${
+                    isDark 
+                      ? 'bg-gray-700 hover:bg-gray-600' 
+                      : 'bg-green-600 hover:bg-green-700'
+                  }`}
                 >
                   {displayMode === 'grid' ? 'List View' : 'Grid View'}
                 </button>
-                <ThemeToggle isDarkMode={isDarkMode} onToggle={toggleTheme} />
               </div>
             </div>
             {error && (
-              <p className={`text-red-500 text-sm mt-4 ${isDarkMode ? "text-red-400" : ""}`}>
+              <p className={`text-sm mt-4 ${
+                isDark ? "text-red-400" : "text-red-500"
+              }`}>
                 {error}
               </p>
             )}
             {loading && (
-              <p className={`text-lg ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+              <p className={`text-lg ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                 Loading projects...
               </p>
             )}
@@ -92,9 +95,9 @@ const ProjectViewPage = () => {
         </section>
 
         {/* Projects Section */}
-        <section className={`px-8 md:px-20 py-16 transition-colors duration-300 ${isDarkMode ? "bg-gray-900" : "bg-white"}`}>
+        <section className={`px-8 md:px-20 py-16 transition-colors duration-300 ${isDark ? "bg-gray-900" : "bg-white"}`}>
           <div className="max-w-6xl mx-auto">
-            <h2 className={`text-3xl font-bold mb-8 ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+            <h2 className={`text-3xl font-bold mb-8 ${isDark ? "text-white" : "text-gray-900"}`}>
               Projects ({projects.length})
             </h2>
             
@@ -110,7 +113,7 @@ const ProjectViewPage = () => {
                 >
                   <CircularProjectCard
                     project={project}
-                    isDarkMode={isDarkMode}
+                    isDark={isDark}
                     displayMode={displayMode}
                   />
                 </div>
@@ -121,7 +124,7 @@ const ProjectViewPage = () => {
               currentPage={projectPagination.currentPage}
               totalPages={projectPagination.totalPages}
               onPageChange={projectPagination.handlePageChange}
-              isDarkMode={isDarkMode}
+              isDark={isDark}
               variant="blue"
             />
           </div>
@@ -130,26 +133,38 @@ const ProjectViewPage = () => {
         {/* Project Detail Modal */}
         {selectedProject && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className={`max-w-3xl w-full max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
-              <div className={`sticky top-0 flex items-center justify-between p-6 border-b ${isDarkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"}`}>
-                <h2 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+            <div className={`max-w-3xl w-full max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl ${
+              isDark ? "bg-gray-800" : "bg-white"
+            }`}>
+              <div className={`sticky top-0 flex items-center justify-between p-6 border-b ${
+                isDark 
+                  ? "border-gray-700 bg-gray-800" 
+                  : "border-gray-200 bg-white"
+              }`}>
+                <h2 className={`text-2xl font-bold ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}>
                   {selectedProject.title}
                 </h2>
                 <button
                   onClick={closeModal}
-                  className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isDark 
+                      ? "text-gray-400 hover:bg-gray-700" 
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
               <div className="p-6 space-y-6">
                 {/* Images */}
-                {selectedProject.imageUrls.length > 0 && (
+                {selectedProject.imageUrls && selectedProject.imageUrls.length > 0 && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {selectedProject.imageUrls.map((image, index) => (
                       <img
                         key={index}
-                        src={image.url}
+                        src={typeof image === "string" ? image : image.url}
                         alt={`${selectedProject.title} ${index + 1}`}
                         className="w-full h-48 object-cover rounded-lg"
                       />
@@ -157,23 +172,64 @@ const ProjectViewPage = () => {
                   </div>
                 )}
                 {/* Description */}
-                <div>
-                  <h3 className={`text-lg font-semibold ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
-                    Description
-                  </h3>
-                  <p className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
-                    {selectedProject.description}
-                  </p>
-                </div>
+                {selectedProject.description && (
+                  <div>
+                    <h3 className={`text-lg font-semibold ${
+                      isDark ? "text-gray-300" : "text-gray-700"
+                    }`}>
+                      Description
+                    </h3>
+                    <p className={`text-sm ${
+                      isDark ? "text-gray-400" : "text-gray-600"
+                    }`}>
+                      {selectedProject.description}
+                    </p>
+                  </div>
+                )}
                 {/* Location */}
-                <div>
-                  <h3 className={`text-lg font-semibold ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
-                    Location
-                  </h3>
-                  <p className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
-                    {selectedProject.location}
-                  </p>
-                </div>
+                {selectedProject.location && (
+                  <div>
+                    <h3 className={`text-lg font-semibold ${
+                      isDark ? "text-gray-300" : "text-gray-700"
+                    }`}>
+                      Location
+                    </h3>
+                    <p className={`text-sm ${
+                      isDark ? "text-gray-400" : "text-gray-600"
+                    }`}>
+                      {selectedProject.location}
+                    </p>
+                  </div>
+                )}
+                {/* Additional Project Details */}
+                {selectedProject.date && (
+                  <div>
+                    <h3 className={`text-lg font-semibold ${
+                      isDark ? "text-gray-300" : "text-gray-700"
+                    }`}>
+                      Date
+                    </h3>
+                    <p className={`text-sm ${
+                      isDark ? "text-gray-400" : "text-gray-600"
+                    }`}>
+                      {new Date(selectedProject.date).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+                {selectedProject.category && (
+                  <div>
+                    <h3 className={`text-lg font-semibold ${
+                      isDark ? "text-gray-300" : "text-gray-700"
+                    }`}>
+                      Category
+                    </h3>
+                    <p className={`text-sm ${
+                      isDark ? "text-gray-400" : "text-gray-600"
+                    }`}>
+                      {selectedProject.category}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

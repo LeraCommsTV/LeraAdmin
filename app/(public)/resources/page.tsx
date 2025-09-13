@@ -3,23 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { FaFilePdf } from "react-icons/fa";
 import { Sun, Moon } from "lucide-react";
+import { useTheme } from '@/context/ThemeContext';
+
 
 export default function HomePage() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  useEffect(() => {
-    // Check for saved theme preference or default to light mode
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setIsDarkMode(savedTheme === 'dark');
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = !isDarkMode;
-    setIsDarkMode(newTheme);
-    localStorage.setItem('theme', newTheme ? 'dark' : 'light');
-  };
+  const { isDark } = useTheme();
 
   interface DownloadItem {
     title: string;
@@ -54,19 +42,8 @@ export default function HomePage() {
   };
 
   return (
-    <div className={isDarkMode ? 'dark' : ''}>
-      {/* Theme Toggle Button */}
-      <button
-        onClick={toggleTheme}
-        className="fixed top-4 left-60 md:top-4 md:right-160 md:left-auto z-50 p-3 rounded-lg bg-green-600 dark:bg-green-700 shadow-lg border border-green-600 dark:border-green-700 hover:shadow-xl transition-all duration-300"
-        aria-label="Toggle theme"
-      >
-        {isDarkMode ? (
-          <Sun className="w-5 h-5 text-white transition-transform duration-300 hover:rotate-180" />
-        ) : (
-          <Moon className="w-5 h-5 text-white transition-transform duration-300 hover:rotate-12" />
-        )}
-      </button>
+    <div className={isDark ? 'dark' : ''}>
+     
 
       {/* Hero Section with Background Image */}
       <div className="relative min-h-screen">
@@ -79,7 +56,7 @@ export default function HomePage() {
         />
         
         {/* Overlay */}
-        <div className={`absolute inset-0 ${isDarkMode ? 'bg-black/70' : 'bg-black/50'} transition-colors duration-300`} />
+        <div className={`absolute inset-0 ${isDark ? 'bg-black/70' : 'bg-black/50'} transition-colors duration-300`} />
         
         {/* Content */}
         <div className="relative h-full w-full flex flex-col justify-center items-end md:px-20 px-8 md:pt-28 md:pb-28 pt-52 pb-10 text-white min-h-screen">
@@ -102,24 +79,24 @@ export default function HomePage() {
 
       {/* Downloads Section */}
       <div className={`space-y-6 py-12 px-8 md:px-24 transition-colors duration-300 ${
-        isDarkMode 
+        isDark 
           ? 'bg-gray-900 text-white' 
           : 'bg-white text-gray-900'
       }`}>
         {downloadItems.map((item, index) => (
           <div key={index} className="py-6">
             <h3 className={`md:text-lg text-sm font-bold font-mona ${
-              isDarkMode ? 'text-white' : 'text-gray-900'
+              isDark ? 'text-white' : 'text-gray-900'
             }`}>
               {item.title}
             </h3>
             <p className={`text-sm font-mona font-semibold mt-2 ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              isDark ? 'text-gray-300' : 'text-gray-700'
             }`}>
               {item.description}
             </p>
             <div className={`flex items-center justify-between mt-4 p-4 rounded-md border transition-colors duration-300 ${
-              isDarkMode 
+              isDark 
                 ? 'border-gray-700 bg-gray-800' 
                 : 'border-gray-200 bg-white'
             }`}>
@@ -127,12 +104,12 @@ export default function HomePage() {
                 <FaFilePdf color="red" />
                 <div className="ml-4">
                   <p className={`text-sm font-black font-mona ${
-                    isDarkMode ? 'text-white' : 'text-gray-900'
+                    isDark ? 'text-white' : 'text-gray-900'
                   }`}>
                     {item.fileName}
                   </p>
                   <p className={`text-[10px] font-black font-mona ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    isDark ? 'text-gray-400' : 'text-gray-600'
                   }`}>
                     {item.fileSize}
                   </p>

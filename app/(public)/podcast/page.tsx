@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Play, Clock, Eye, Calendar, Search, Filter, Pause, SkipForward, SkipBack, Volume2 } from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
 
 interface PodcastEpisode {
   id: string;
@@ -78,6 +79,8 @@ const PodcastPage = () => {
   const [selectedEpisode, setSelectedEpisode] = useState<PodcastEpisode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const { isDark } = useTheme();
+
 
   // Memoized filtered episodes for better performance
   const filteredEpisodes = useMemo(() => {
@@ -186,17 +189,25 @@ const PodcastPage = () => {
   ));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <header className="pt-14 bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-green-900">LeraTalk</h1>
+     <div className={`min-h-screen ${
+        isDark 
+          ? 'bg-gradient-to-br from-slate-900 to-gray-900 text-white' 
+          : 'bg-gradient-to-br from-slate-50 to-blue-50'
+      }`}>
+        {/* Header */}
+        <header className={`pt-14 ${
+          isDark ? 'bg-gray-800 border-b-gray-700' : 'bg-white shadow-sm border-b'
+        }`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className={`text-3xl font-bold ${
+                  isDark ? 'text-green-300' : 'text-green-900'
+                }`}>LeraTalk</h1>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">

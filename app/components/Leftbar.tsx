@@ -33,6 +33,8 @@ export default function Sidebar({ isOpen, setIsOpen, darkMode }: SidebarProps) {
     { name: "Project", path: "/project", icon: "📚" },
     { name: "Blog", path: "/blog", icon: "📚" },
     { name: "Teams", path: "/team", icon: "👥" },
+    { name: "Podcast", path: "/podcasts", icon: "👥" },
+
     { name: "Gallery", path: "/gallery", icon: "🎬" },
     { name: "contact", path: "/contact", icon: "📞" },
     

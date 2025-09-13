@@ -21,7 +21,6 @@ import {
 
 export default function AdminWelcomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  redirect("/home"); // Redirect to another page
   
   
   const toggleMenu = () => {
@@ -236,7 +235,7 @@ export default function AdminWelcomePage() {
               <Link href="/signin" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
                 Settings
               </Link>
-              <Link href="/home" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
+              <Link href="/" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">
                 Public Site
               </Link>
               <Link href="/blogs" className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400">

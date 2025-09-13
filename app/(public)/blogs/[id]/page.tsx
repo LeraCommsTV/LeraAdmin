@@ -5,6 +5,7 @@ import { ArrowLeft, Clock, Calendar, Sun, Moon } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, collection, getDocs, query, where, orderBy, limit, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useTheme } from '@/context/ThemeContext';
 
 // Blog Post Type (aligned with the blog page)
 type BlogPost = {
@@ -34,7 +35,7 @@ const BlogDetailPage = () => {
   const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { isDark } = useTheme();
   
   // Newsletter subscription states
   const [email, setEmail] = useState('');
@@ -133,10 +134,20 @@ const BlogDetailPage = () => {
           const data = postSnap.data();
           const fetchedPost: BlogPost = {
             id: postSnap.id,
-            ...data,
+            type: data.type || 'news',
+            date: data.date || '',
+            title: data.title || '',
+            excerpt: data.excerpt || '',
+            content: data.content || '',
             image: data.featuredImage || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=600&fit=crop',
             readTime: data.readTime || estimateReadTime(data.content || ''),
-            type: data.type || 'news',
+            category: data.category || '',
+            status: data.status || 'draft',
+            author: data.author || '',
+            tags: Array.isArray(data.tags) ? data.tags : [],
+            views: typeof data.views === 'number' ? data.views : 0,
+            videoUrl: data.videoUrl,
+            featuredImagePublicId: data.featuredImagePublicId,
           };
           if (fetchedPost.status === 'published') {
             setPost(fetchedPost);
@@ -201,10 +212,6 @@ const BlogDetailPage = () => {
     }
   };
 
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-  };
 
   // Handle navigation to another post
   const handlePostClick = (postId: string) => {
@@ -213,17 +220,17 @@ const BlogDetailPage = () => {
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'} flex items-center justify-center`}>
-        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>Loading post...</p>
+      <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-white'} flex items-center justify-center`}>
+        <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Loading post...</p>
       </div>
     );
   }
 
   if (error || !post) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'} flex items-center justify-center`}>
+      <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-white'} flex items-center justify-center`}>
         <div className="text-center">
-          <h1 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h1 className={`text-2xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
             {error || 'Post not found'}
           </h1>
           <button
@@ -243,34 +250,26 @@ const BlogDetailPage = () => {
       const contentState = JSON.parse(content);
       // Simple rendering - in production, use a proper Draft.js renderer
       const renderedBlocks = contentState.blocks?.map((block: any, index: number) => (
-        <div key={index} className={`mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-          {block.type === 'header-one' && <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{block.text}</h2>}
-          {block.type === 'header-two' && <h3 className={`text-xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{block.text}</h3>}
-          {block.type === 'unordered-list-item' && <ul className={`list-disc pl-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}><li>{block.text}</li></ul>}
-          {block.type === 'ordered-list-item' && <ol className={`list-decimal pl-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}><li>{block.text}</li></ol>}
-          {['unstyled', 'p'].includes(block.type) && <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{block.text}</p>}
+        <div key={index} className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+          {block.type === 'header-one' && <h2 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>{block.text}</h2>}
+          {block.type === 'header-two' && <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>{block.text}</h3>}
+          {block.type === 'unordered-list-item' && <ul className={`list-disc pl-5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}><li>{block.text}</li></ul>}
+          {block.type === 'ordered-list-item' && <ol className={`list-decimal pl-5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}><li>{block.text}</li></ol>}
+          {['unstyled', 'p'].includes(block.type) && <p className={isDark ? 'text-gray-300' : 'text-gray-700'}>{block.text}</p>}
           {/* Add more block types as needed */}
         </div>
       )) || <p>No content available</p>;
       return renderedBlocks;
     } catch (err) {
       console.error('Error rendering content:', err);
-      return <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Content not available</p>;
+      return <p className={isDark ? 'text-gray-300' : 'text-gray-700'}>Content not available</p>;
     }
   };
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
-      isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'
+      isDark ? 'bg-gray-900 text-white' : 'bg-white text-black'
     }`}>
-      {/* Dark Mode Toggle */}
-      <button
-        onClick={toggleDarkMode}
-        className="fixed top-4 right-4 z-50 p-3 rounded-lg bg-green-600 text-white shadow-lg hover:bg-green-700 transition-colors duration-300 hover:scale-110"
-        aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-      >
-        {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-      </button>
 
       {/* Hero Image Section */}
       <div className="relative pt-24 ">
@@ -328,7 +327,7 @@ const BlogDetailPage = () => {
                     <span
                       key={index}
                       className={`px-3 py-1 text-xs font-medium rounded-full ${
-                        isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
+                        isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
                       }`}
                     >
                       #{tag}
@@ -356,12 +355,12 @@ const BlogDetailPage = () => {
 
             {/* Author Info (simple) */}
             <div className={`mt-16 p-6 rounded-lg ${
-              isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
+              isDark ? 'bg-gray-800' : 'bg-gray-50'
             }`}>
-              <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              <h3 className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 By {post.author}
               </h3>
-              <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+              <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
                 Published on {post.date} • {post.readTime} • {post.views} views
               </p>
             </div>
@@ -369,12 +368,12 @@ const BlogDetailPage = () => {
 
           {/* Sidebar */}
           <aside className="w-80 lg:w-96 flex-shrink-0 hidden md:block">
-            <div className={`sticky top-8 space-y-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <div className={`sticky top-8 space-y-6 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               {/* Recent Posts Section */}
               <div className={`p-6 rounded-lg ${
-                isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
+                isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
               } border`}>
-                <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
                   Recent Posts
                 </h3>
                 <ul className="space-y-3">
@@ -391,11 +390,11 @@ const BlogDetailPage = () => {
                       />
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-medium group-hover:text-green-600 transition-colors ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-900'
+                          isDark ? 'text-gray-300' : 'text-gray-900'
                         }`}>
                           {recentPost.title}
                         </p>
-                        <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                        <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
                           {recentPost.date}
                         </p>
                       </div>
@@ -406,12 +405,12 @@ const BlogDetailPage = () => {
 
               {/* Newsletter Widget (compact) */}
               <div className={`p-6 rounded-lg ${
-                isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
+                isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
               } border`}>
-                <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h3 className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
                   Stay Updated
                 </h3>
-                <p className={`text-sm mb-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                   Get the latest insights in your inbox
                 </p>
                 <form onSubmit={handleSubscribe} className="space-y-2">
@@ -422,7 +421,7 @@ const BlogDetailPage = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={isSubscribing}
                     className={`w-full px-3 py-2 border rounded focus:border-green-600 focus:outline-none text-sm disabled:opacity-50 ${
-                      isDarkMode 
+                      isDark 
                         ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                         : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                     }`}
@@ -456,13 +455,13 @@ const BlogDetailPage = () => {
 
       {/* Newsletter Section (same as blog page) */}
       <div className={`py-16 px-8 transition-colors duration-300 ${
-        isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
+        isDark ? 'bg-gray-800' : 'bg-gray-50'
       }`}>
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className={`text-3xl font-light mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h2 className={`text-3xl font-light mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
             Stay In The Loop
           </h2>
-          <p className={`mb-8 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+          <p className={`mb-8 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
             Subscribe to our newsletter for the latest updates and insights
           </p>
           <form onSubmit={handleSubscribe}>
@@ -474,7 +473,7 @@ const BlogDetailPage = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isSubscribing}
                 className={`flex-1 px-4 py-3 border rounded-lg focus:border-green-600 focus:outline-none transition-colors duration-300 disabled:opacity-50 ${
-                  isDarkMode 
+                  isDark 
                     ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                     : 'bg-gray-100 border-gray-300 text-gray-900 placeholder-gray-500'
                 }`}

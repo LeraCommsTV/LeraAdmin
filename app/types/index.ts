@@ -14,7 +14,11 @@ export interface ProjectDetail {
   description: string;
   imageUrls: { url: string; publicId: string }[];
   location: string;
+  category?: string;
+  date?: string | number | Date;
+  // ...other properties
 }
+
 
 export interface CarouselItem {
   docId: string;
