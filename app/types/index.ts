@@ -32,10 +32,6 @@ export interface ProjectFormData {
   title: string;
   description: string;
   imageUrls: { url: string; publicId: string }[];
-  fullDescription: string;
-  objectives: string[];
-  outcomes: string[];
-  duration: string;
   location: string;
 }
 

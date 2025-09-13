@@ -1,4 +1,3 @@
-// components/sidebar.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -31,13 +30,11 @@ export default function Sidebar({ isOpen, setIsOpen, darkMode }: SidebarProps) {
   const navItems = [
     { name: "Home", path: "/dashboard", icon: "🏠" },
     { name: "Project", path: "/project", icon: "📚" },
-    { name: "Blog", path: "/blog", icon: "📚" },
+    { name: "Blog", path: "/blog", icon: "✍️" },
     { name: "Teams", path: "/team", icon: "👥" },
-    { name: "Podcast", path: "/podcasts", icon: "👥" },
-
+    { name: "Podcast", path: "/podcasts", icon: "🎙️" },
     { name: "Gallery", path: "/gallery", icon: "🎬" },
     { name: "contact", path: "/contact", icon: "📞" },
-    
   ];
 
   return (
@@ -56,6 +53,7 @@ export default function Sidebar({ isOpen, setIsOpen, darkMode }: SidebarProps) {
           bg-gray-800 text-white h-screen transition-all duration-300 flex-shrink-0
           ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"} 
           ${isCollapsed ? "w-16 md:w-16" : "w-64 md:w-64"}`}
+        onClick={(e) => e.stopPropagation()} // Prevent clicks from bubbling up
       >
         <div className="flex flex-col h-full">
           {/* Sidebar header with toggle button */}
@@ -88,8 +86,6 @@ export default function Sidebar({ isOpen, setIsOpen, darkMode }: SidebarProps) {
               ))}
             </ul>
           </nav>
-
-       
 
           {/* Bottom actions */}
           <div className="p-4 border-t border-gray-700">
