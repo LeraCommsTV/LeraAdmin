@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Search, PlusCircle, Edit2, Trash2, ChevronDown, ChevronUp, Filter, Grid, List, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { db } from '../../lib/firebase'; // Adjust path to your Firebase config
 import { collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+export const dynamic = 'force-dynamic'
 
 // Types
 type BlogPost = {
