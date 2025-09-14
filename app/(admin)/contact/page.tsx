@@ -51,7 +51,7 @@ const ContactsPage = () => {
   // Load data from Firebase
   useEffect(() => {
     // Listener for contacts collection
-    const contactsRef = collection(db, "contacts");
+    const contactsRef = collection(db, "contact");
     const unsubscribeContacts = onSnapshot(contactsRef, (snapshot) => {
       const contactsData = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -232,7 +232,7 @@ const ContactsPage = () => {
 
     if (validateForm()) {
       const now = new Date();
-      const collectionName = formData.isSubscriber ? "subscribers" : "contacts";
+      const collectionName = formData.isSubscriber ? "subscribers" : "contact";
       const contactData = {
         name: formData.name,
         email: formData.email,
