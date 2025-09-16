@@ -22,7 +22,7 @@ export default function HomePage() {
     {
       title: "Company Profile",
       description: "Comprehensive overview of our mission, vision, services, and impact across health, education, and social development sectors.",
-      fileName: "Lera Profile",
+      fileName: "Lera",
       fileType: "pdf",
       category: "Corporate",
       lastUpdated: "2024"

@@ -100,7 +100,7 @@ const Footer = () => {
       {/* Top Header */}
       <div className="py-4 md:px-12 px-8">
         <p className="text-center font-mona font-semibold text-xs">
-          Baraqa Mall, off 69, Gwarinpa Estate, Abuja, Nigeria. | +234 806 775 0659 |
+        Suite AO1 Baraqa Mall, off 69, Gwarinpa Estate, Abuja, Nigeria. | +234 806 775 0659 |
           info@leracoms.com
         </p>
 

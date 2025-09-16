@@ -548,7 +548,7 @@ const ContactForm = () => {
 
               <div className="space-y-6">
                 {[
-                  { icon: MapPin, title: "Address", content: "Baraqa Mall, off 69, Gwarinpa Estate, Abuja, Nigeria" },
+                  { icon: MapPin, title: "Address", content: "Suite A01 Baraqa Mall, off 69, Gwarinpa Estate, Abuja, Nigeria" },
                   { icon: Phone, title: "Phone", content: "+234 806 775 0659" },
                   { icon: Mail, title: "Email", content: "info@leracoms.com" },
                   {

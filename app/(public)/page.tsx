@@ -27,13 +27,13 @@ function HeroSection() {
     {
       title: "Transforming Narratives, Elevating Impact",
       description: "Empowering your brand with strategic communication and innovative media solutions that drive meaningful change across communities and industries.",
-      image: "/images/heroBg.svg",
+      image: "/images/space.jpg",
       cta: "Discover Our Solutions"
     },
     {
       title: "Driving Social Change Through Communication",
       description: "Partnering with communities and organizations to create sustainable impact through targeted messaging and authentic storytelling.",
-      image: "/images/afro.jpg",
+      image: "/images/heroBg.svg",
       cta: "Our Impact Stories"
     },
     {
@@ -235,7 +235,7 @@ function WhatsHappening() {
       title: "Sustainable Development Goals Community Workshop",
       subtitle: "DEVELOPMENT · COMMUNITY · SUSTAINABILITY",
       description: "Supporting local communities in achieving sustainable development through targeted interventions.",
-      image: "/images/assets/events/Event3.jpeg",
+      image: "/images/Aerial.jpg",
       date: "January 2024"
     },
     {
@@ -444,7 +444,7 @@ function FlagShip() {
             >
               <div className="relative">
                 <Image
-                  src="/images/businessman.jpg"
+                  src="/images/kid.jpg"
                   alt="WASH Project Implementation"
                   width={500}
                   height={400}
