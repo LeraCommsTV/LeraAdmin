@@ -33,7 +33,7 @@ function HeroSection() {
     {
       title: "Driving Social Change Through Communication",
       description: "Partnering with communities and organizations to create sustainable impact through targeted messaging and authentic storytelling.",
-      image: "/images/heroBg.svg",
+      image: "/images/boy.JPG",
       cta: "Our Impact Stories"
     },
     {
@@ -197,7 +197,7 @@ function AboutUs() {
             >
               <div className="relative">
                 <Image
-                  src="/images/about-us.png"
+                  src="/images/Dorcas.JPG"
                   alt="Strategic Communication Team"
                   width={600}
                   height={500}
@@ -221,14 +221,14 @@ function WhatsHappening() {
       title: "Community Health Initiative at Jahi Primary School",
       subtitle: "CSR · HEALTH · EDUCATION",
       description: "Implementing comprehensive health and wellness programs for students and community members in Keffi.",
-      image: "/images/assets/events/Event1.jpeg",
+      image: "/images/dorr.JPG",
       date: "March 2024"
     },
     {
       title: "Gender Equality Summit: Empowering Women in Leadership",
       subtitle: "ADVOCACY · GENDER · LEADERSHIP",
       description: "Renewing our commitment to gender equality through strategic partnerships and community engagement.",
-      image: "/images/assets/events/Event2.jpeg",
+      image: "/images/akila.JPG",
       date: "February 2024"
     },
     {
@@ -242,7 +242,7 @@ function WhatsHappening() {
       title: "Women Entrepreneurs Business Acceleration Program",
       subtitle: "BUSINESS · EMPOWERMENT · INNOVATION",
       description: "Providing resources, mentorship, and strategic support to women-led businesses across Nigeria.",
-      image: "/images/assets/events/Event4.jpeg",
+      image: "/images/boyup.JPG",
       date: "December 2023"
     },
   ];
@@ -523,13 +523,20 @@ function FlagShip() {
 function Partners() {
   const { isDark } = useTheme();
   const partners = [
-    "/images/assets/patners/Patner1.svg",
-    "/images/assets/patners/Patner2.svg",
-    "/images/assets/patners/Patner3.svg",
-    "/images/assets/patners/Patner1.svg",
-    "/images/assets/patners/Patner2.svg",
-    "/images/assets/patners/Patner3.svg",
-    "/images/assets/patners/Patner1.svg",
+    "/images/assets/partners/BHF.jpg",
+    "/images/assets/partners/ALANTIKA.png",
+    "/images/assets/partners/ViewerTv.jpg",
+    "/images/assets/partners/TKC.jpeg",
+    "/images/assets/partners/SCL.png",
+    "/images/assets/partners/s24Media.jpg",
+    "/images/assets/partners/REMOTEWEBNETDYNAMICS.png",
+    "/images/assets/partners/channels4.jpg",
+    "/images/assets/partners/Mentors.jpg",
+     "/images/assets/partners/IITA.png",
+    "/images/assets/partners/NBRDA.png",
+    "/images/assets/partners/FactNews.jpg",
+    "/images/assets/partners/project_by_projects.jpeg",
+    "/images/assets/partners/NBTE.png",
   ];
 
   const partnerSettings = {
@@ -542,7 +549,7 @@ function Partners() {
     autoplaySpeed: 1000,
     arrows: false,
     centerMode: true,
-    centerPadding: "30px",
+    centerPadding: "200px",
     pauseOnHover: true,
     responsive: [
       {

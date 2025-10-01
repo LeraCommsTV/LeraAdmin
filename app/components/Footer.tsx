@@ -226,7 +226,7 @@ const Footer = () => {
             { 
               Icon: FaLinkedin, 
               hoverColor: 'hover:bg-blue-600',
-              link: 'https://www.linkedin.com/company/lera-communications/',
+              link: 'https://www.linkedin.com/company/91063773/admin/dashboard/',
               label: 'LinkedIn'
             },
             { 
@@ -238,7 +238,7 @@ const Footer = () => {
             { 
               Icon: FaYoutube, 
               hoverColor: 'hover:bg-red-600',
-              link: 'https://www.youtube.com/@leracommunications',
+              link: 'https://www.youtube.com/@leracoms',
               label: 'YouTube'
             },
             { 

@@ -81,9 +81,13 @@ const AboutHome = () => {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1, duration: 0.6 }}
               >
-                To be the leading strategic communications and media consulting
-                company in Nigeria, driving impactful narratives and innovative
-                media solutions that inspire, inform, and transform societies.
+                To build a world class and well-equipped
+                communication and media production company
+                with standard productions that can be generally
+                accepted in all parts of the world; we want to build a
+                film, broadcast and video production brand that can
+                work for clients not only in Nigeria, but in all parts of
+                the world.
               </motion.p>
             </div>
           </div>
@@ -115,10 +119,10 @@ const AboutHome = () => {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1, duration: 0.6 }}
               >
-                Leveraging technology and storytelling to engage audiences,
-                foster social progress, build impactful partnerships, and
-                continuously develop our team's talent for excellence,
-                innovation, and integrity.
+                To create a standard and world – class
+                communication and media production and
+                broadcast business that can favorably compete with
+                leaders in the industry.
               </motion.p>
             </div>
           </div>
