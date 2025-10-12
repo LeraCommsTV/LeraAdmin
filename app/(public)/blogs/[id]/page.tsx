@@ -1,11 +1,12 @@
 // app/blogs/[id]/page.tsx
 "use client";
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, Calendar, Sun, Moon } from 'lucide-react';
+import { ArrowLeft, Clock, Calendar, Share2, Check } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, collection, getDocs, query, where, orderBy, limit, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useTheme } from '@/context/ThemeContext';
+import Head from 'next/head';
 
 // Blog Post Type (aligned with the blog page)
 type BlogPost = {
@@ -42,6 +43,97 @@ const BlogDetailPage = () => {
   const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
   const [subscriptionMessage, setSubscriptionMessage] = useState<string | null>(null);
   const [isSubscribing, setIsSubscribing] = useState(false);
+  
+  // Share functionality states
+  const [copied, setCopied] = useState(false);
+
+  // Update document meta tags dynamically
+  useEffect(() => {
+    if (post) {
+      const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+      const siteName = 'Your Blog Name'; // Replace with your actual site name
+      
+      // Update document title
+      document.title = `${post.title} | ${siteName}`;
+      
+      // Function to update or create meta tag
+      const updateMetaTag = (property: string, content: string, isOg = true) => {
+        const attribute = isOg ? 'property' : 'name';
+        let metaTag = document.querySelector(`meta[${attribute}="${property}"]`);
+        
+        if (!metaTag) {
+          metaTag = document.createElement('meta');
+          metaTag.setAttribute(attribute, property);
+          document.head.appendChild(metaTag);
+        }
+        metaTag.setAttribute('content', content);
+      };
+
+      // Open Graph tags
+      updateMetaTag('og:title', post.title);
+      updateMetaTag('og:description', post.excerpt);
+      updateMetaTag('og:image', post.image);
+      updateMetaTag('og:url', currentUrl);
+      updateMetaTag('og:type', 'article');
+      updateMetaTag('og:site_name', siteName);
+      updateMetaTag('article:published_time', post.date);
+      updateMetaTag('article:author', post.author);
+      updateMetaTag('article:section', post.category);
+      
+      // Twitter Card tags
+      updateMetaTag('twitter:card', 'summary_large_image', false);
+      updateMetaTag('twitter:title', post.title, false);
+      updateMetaTag('twitter:description', post.excerpt, false);
+      updateMetaTag('twitter:image', post.image, false);
+      
+      // Standard meta tags
+      updateMetaTag('description', post.excerpt, false);
+      updateMetaTag('keywords', post.tags.join(', '), false);
+      
+      // Canonical URL
+      let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+      if (!canonical) {
+        canonical = document.createElement('link');
+        canonical.rel = 'canonical';
+        document.head.appendChild(canonical);
+      }
+      canonical.href = currentUrl;
+    }
+  }, [post]);
+
+  // Copy link to clipboard
+  const handleCopyLink = async () => {
+    try {
+      const url = window.location.href;
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  // Share via Web Share API (if available)
+  const handleShare = async () => {
+    if (!post) return;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post.title,
+          text: post.excerpt,
+          url: window.location.href,
+        });
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          console.error('Error sharing:', err);
+          handleCopyLink(); // Fallback to copy
+        }
+      }
+    } else {
+      handleCopyLink(); // Fallback for browsers without Web Share API
+    }
+  };
 
   // Clear subscription messages after 5 seconds
   useEffect(() => {
@@ -100,10 +192,9 @@ const BlogDetailPage = () => {
         status: 'active',
         source: 'blog_detail_subscription',
         userAgent: navigator.userAgent,
-        // Additional metadata
         domain: trimmedEmail.split('@')[1],
         createdAt: new Date().toISOString(),
-        blogPostId: id, // Track which blog post they subscribed from
+        blogPostId: id,
       });
 
       console.log('Subscriber added with ID:', docRef.id);
@@ -188,9 +279,8 @@ const BlogDetailPage = () => {
             type: doc.data().type || 'news',
           })) as BlogPost[];
 
-        // Filter out the current post
         const filteredRecent = allRecent.filter(p => p.id !== id);
-        setRecentPosts(filteredRecent.slice(0, 5)); // Limit to 5
+        setRecentPosts(filteredRecent.slice(0, 5));
       } catch (err) {
         console.error('Error fetching recent posts:', err);
       }
@@ -199,7 +289,7 @@ const BlogDetailPage = () => {
     fetchRecentPosts();
   }, [id]);
 
-  // Estimate read time (same as in blog page)
+  // Estimate read time
   const estimateReadTime = (content: string) => {
     try {
       const contentState = JSON.parse(content);
@@ -211,7 +301,6 @@ const BlogDetailPage = () => {
       return '5 min read';
     }
   };
-
 
   // Handle navigation to another post
   const handlePostClick = (postId: string) => {
@@ -244,11 +333,10 @@ const BlogDetailPage = () => {
     );
   }
 
-  // Render content (assuming content is Draft.js JSON)
+  // Render content
   const renderContent = (content: string) => {
     try {
       const contentState = JSON.parse(content);
-      // Simple rendering - in production, use a proper Draft.js renderer
       const renderedBlocks = contentState.blocks?.map((block: any, index: number) => (
         <div key={index} className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
           {block.type === 'header-one' && <h2 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>{block.text}</h2>}
@@ -256,7 +344,6 @@ const BlogDetailPage = () => {
           {block.type === 'unordered-list-item' && <ul className={`list-disc pl-5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}><li>{block.text}</li></ul>}
           {block.type === 'ordered-list-item' && <ol className={`list-decimal pl-5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}><li>{block.text}</li></ol>}
           {['unstyled', 'p'].includes(block.type) && <p className={isDark ? 'text-gray-300' : 'text-gray-700'}>{block.text}</p>}
-          {/* Add more block types as needed */}
         </div>
       )) || <p>No content available</p>;
       return renderedBlocks;
@@ -272,13 +359,13 @@ const BlogDetailPage = () => {
     }`}>
 
       {/* Hero Image Section */}
-      <div className="relative pt-24 ">
-        <div className=' '>
+      <div className="relative pt-24">
+        <div>
           <img
-          src={post.image}
-          alt={post.title}
-          className="w-full h-96 object-cover "
-        />
+            src={post.image}
+            alt={post.title}
+            className="w-full h-96 object-cover"
+          />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-8">
@@ -309,13 +396,36 @@ const BlogDetailPage = () => {
         <div className="flex items-start gap-8 lg:gap-12">
           {/* Main Content */}
           <div className="flex-1 max-w-4xl">
-            <div className="flex items-center mb-8">
+            <div className="flex items-center justify-between mb-8">
               <button
                 onClick={() => router.back()}
-                className="flex items-center gap-2 text-green-600 hover:text-green-500 font-medium mb-4 transition-colors"
+                className="flex items-center gap-2 text-green-600 hover:text-green-500 font-medium transition-colors"
               >
                 <ArrowLeft size={20} />
                 Back to Blog
+              </button>
+              
+              {/* Share Button */}
+              <button
+                onClick={handleShare}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  isDark 
+                    ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' 
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+                aria-label="Share this post"
+              >
+                {copied ? (
+                  <>
+                    <Check size={18} />
+                    <span className="text-sm font-medium">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 size={18} />
+                    <span className="text-sm font-medium">Share</span>
+                  </>
+                )}
               </button>
             </div>
 
@@ -353,7 +463,7 @@ const BlogDetailPage = () => {
               )}
             </article>
 
-            {/* Author Info (simple) */}
+            {/* Author Info */}
             <div className={`mt-16 p-6 rounded-lg ${
               isDark ? 'bg-gray-800' : 'bg-gray-50'
             }`}>
@@ -403,7 +513,7 @@ const BlogDetailPage = () => {
                 </ul>
               </div>
 
-              {/* Newsletter Widget (compact) */}
+              {/* Newsletter Widget */}
               <div className={`p-6 rounded-lg ${
                 isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
               } border`}>
@@ -435,7 +545,6 @@ const BlogDetailPage = () => {
                     {isSubscribing ? 'Subscribing...' : 'Subscribe'}
                   </button>
                   
-                  {/* Error/Success Messages */}
                   {subscriptionError && (
                     <div className="p-2 bg-red-900/50 border border-red-500 rounded text-xs text-red-300">
                       {subscriptionError}
@@ -453,7 +562,7 @@ const BlogDetailPage = () => {
         </div>
       </div>
 
-      {/* Newsletter Section (same as blog page) */}
+      {/* Newsletter Section */}
       <div className={`py-16 px-8 transition-colors duration-300 ${
         isDark ? 'bg-gray-800' : 'bg-gray-50'
       }`}>
@@ -489,7 +598,6 @@ const BlogDetailPage = () => {
               </button>
             </div>
             
-            {/* Error/Success Messages for bottom newsletter */}
             {(subscriptionError || subscriptionMessage) && (
               <div className="mt-4 max-w-md mx-auto">
                 {subscriptionError && (
