@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Play, Clock, Eye, Calendar, Search, Filter, Pause, SkipForward, SkipBack, Volume2 } from 'lucide-react';
+import { Play, Clock, Eye, Calendar, Search, Filter, Pause, SkipForward, SkipBack, Volume2, Loader2 } from 'lucide-react';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { useTheme } from '@/context/ThemeContext';
 
 interface PodcastEpisode {
@@ -13,74 +15,43 @@ interface PodcastEpisode {
   publishedAt: string;
   category: string;
   youtubeId: string;
+  createdAt?: any;
 }
 
 const PodcastPage = () => {
-  const [episodes] = useState<PodcastEpisode[]>([
-    {
-      id: '1',
-      title: 'The Future of Artificial Intelligence with Dr. Sarah Chen',
-      description: 'Exploring the cutting-edge developments in AI and machine learning, discussing ethical implications and future possibilities.',
-      thumbnail: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=225&fit=crop',
-      duration: '45:32',
-      views: '125K',
-      publishedAt: '2024-01-15',
-      category: 'Technology',
-      youtubeId: 'PvkZuCFa8ng'
-    },
-    {
-      id: '2',
-      title: 'Blockchain Revolution: Beyond Cryptocurrency',
-      description: 'Deep dive into blockchain Leranology applications beyond digital currencies, featuring industry experts.',
-      thumbnail: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=225&fit=crop',
-      duration: '38:15',
-      views: '89K',
-      publishedAt: '2024-01-08',
-      category: 'Blockchain',
-      youtubeId: 'dQw4w9WgXcQ'
-    },
-    {
-      id: '3',
-      title: 'Quantum Computing: The Next Frontier',
-      description: 'Understanding quantum computing principles and their potential impact on various industries.',
-      thumbnail: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&h=225&fit=crop',
-      duration: '52:18',
-      views: '156K',
-      publishedAt: '2024-01-01',
-      category: 'Science',
-      youtubeId: 'jNQXAC9IVRw'
-    },
-    {
-      id: '4',
-      title: 'Startup Success Stories: Lessons from Silicon Valley',
-      description: 'Interviews with successful entrepreneurs sharing their journey from idea to IPO.',
-      thumbnail: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?w=400&h=225&fit=crop',
-      duration: '41:07',
-      views: '201K',
-      publishedAt: '2023-12-25',
-      category: 'Business',
-      youtubeId: 'oHg5SJYRHA0'
-    },
-    {
-      id: '5',
-      title: 'Cybersecurity in the Modern Age',
-      description: 'Protecting digital assets and understanding current cybersecurity threats and solutions.',
-      thumbnail: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=400&h=225&fit=crop',
-      duration: '36:42',
-      views: '97K',
-      publishedAt: '2023-12-18',
-      category: 'Technology',
-      youtubeId: 'RgKAFK5djSk'
-    }
-  ]);
-  
+  const [episodes, setEpisodes] = useState<PodcastEpisode[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedEpisode, setSelectedEpisode] = useState<PodcastEpisode | null>(null);
+  const [selectedEpisode, setSelectedEpisode] = useState<PodcastEpisode | null>(episodes[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const { isDark } = useTheme();
 
+  // Real-time listener for episodes from Firebase
+  useEffect(() => {
+    const q = query(collection(db, 'episodes'), orderBy('createdAt', 'desc'));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const episodesData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as PodcastEpisode[];
+      
+      setEpisodes(episodesData);
+      setLoading(false);
+      
+      // Set first episode as selected if none selected
+      if (!selectedEpisode && episodesData.length > 0) {
+        setSelectedEpisode(episodesData[0]);
+      }
+    }, (error) => {
+      console.error('Error fetching episodes:', error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Memoized filtered episodes for better performance
   const filteredEpisodes = useMemo(() => {
@@ -103,17 +74,16 @@ const PodcastPage = () => {
   }, [episodes, selectedCategory, searchTerm]);
 
   // Memoized categories
-  const categories = useMemo(() => 
-    ['All', ...Array.from(new Set(episodes.map(ep => ep.category)))],
-    [episodes]
-  );
-
-  // Set initial episode
-  useEffect(() => {
-    if (episodes.length > 0 && !selectedEpisode) {
-      setSelectedEpisode(episodes[0]);
-    }
-  }, [episodes, selectedEpisode]);
+  const categories = useMemo(() => {
+    const uniqueCategories = Array.from(
+      new Set(
+        episodes
+          .map(ep => ep.category)
+          .filter(cat => cat && cat.trim() && cat !== '') // Explicitly exclude empty strings
+      )
+    );
+    return ['All', ...uniqueCategories];
+  }, [episodes]);
 
   // Optimized handlers with useCallback
   const handleEpisodeSelect = useCallback((episode: PodcastEpisode) => {
@@ -152,8 +122,11 @@ const PodcastPage = () => {
   const SidebarEpisodeCard = React.memo(({ episode }: { episode: PodcastEpisode }) => (
     <article
       onClick={() => handleEpisodeSelect(episode)}
-      className={`bg-white rounded-lg shadow-md overflow-hidden mb-4 cursor-pointer transition-all duration-300 hover:shadow-lg focus-within:ring-2 focus-within:ring-green-500
-        ${selectedEpisode?.id === episode.id ? 'ring-2 ring-green-500 bg-green-50' : ''}`}
+      className={`rounded-lg shadow-md overflow-hidden mb-4 cursor-pointer transition-all duration-300 hover:shadow-lg focus-within:ring-2 focus-within:ring-green-500
+        ${isDark 
+          ? `bg-gray-800 hover:bg-gray-750 ${selectedEpisode?.id === episode.id ? 'ring-2 ring-green-500 bg-gray-700' : ''}` 
+          : `bg-white hover:bg-gray-50 ${selectedEpisode?.id === episode.id ? 'ring-2 ring-green-500 bg-green-50' : ''}`
+        }`}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && handleEpisodeSelect(episode)}
@@ -172,14 +145,14 @@ const PodcastPage = () => {
           </div>
         </div>
         <div className="p-3 flex-1 min-w-0">
-          <h4 className="font-semibold text-sm text-gray-800 line-clamp-2 mb-1">
+          <h4 className={`font-semibold text-sm line-clamp-2 mb-1 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
             {episode.title}
           </h4>
-          <div className="flex items-center text-gray-500 text-xs mb-1">
+          <div className={`flex items-center text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
             <Eye size={12} className="mr-1 flex-shrink-0" aria-hidden="true" />
             <span>{episode.views}</span>
           </div>
-          <div className="flex items-center text-gray-500 text-xs">
+          <div className={`flex items-center text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
             <Calendar size={12} className="mr-1 flex-shrink-0" aria-hidden="true" />
             <span>{formatDate(episode.publishedAt)}</span>
           </div>
@@ -188,33 +161,27 @@ const PodcastPage = () => {
     </article>
   ));
 
-  return (
-     <div className={`min-h-screen ${
-        isDark 
-          ? 'bg-gradient-to-br from-slate-900 to-gray-900 text-white' 
-          : 'bg-gradient-to-br from-slate-50 to-blue-50'
-      }`}>
-        {/* Header */}
-        <header className={`pt-14 ${
-          isDark ? 'bg-gray-800 border-b-gray-700' : 'bg-white shadow-sm border-b'
-        }`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className={`text-3xl font-bold ${
-                  isDark ? 'text-green-300' : 'text-green-900'
-                }`}>LeraTalk</h1>
-              </div>
-            </div>
-          </div>
-        </header>
+  if (loading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-slate-50 to-blue-50'}`}>
+        <div className="text-center">
+          <Loader2 className="animate-spin mx-auto mb-4 text-green-600" size={48} />
+          <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>Loading episodes...</p>
+        </div>
+      </div>
+    );
+  }
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  return (
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-slate-50 to-blue-50'}`}>
+
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-40">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Main Video Player */}
           <section className="flex-1 lg:w-3/4" aria-labelledby="main-episode-title">
-            {selectedEpisode && (
-              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            {selectedEpisode ? (
+              <div className={`rounded-xl shadow-lg overflow-hidden transition-colors duration-300 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
                 <div className="relative bg-gray-900" style={{ paddingBottom: '56.25%' }}>
                   <iframe
                     className="absolute inset-0 w-full h-full"
@@ -233,40 +200,52 @@ const PodcastPage = () => {
                     <div className="flex items-center space-x-4">
                       <button
                         onClick={togglePlayPause}
-                        className="bg-green-600 hover:bg-green-700 text-white p-3 rounded-full transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        className="bg-green-600 hover:bg-green-700 text-white p-3 rounded-full transition-colors duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                         aria-label={isPlaying ? 'Pause episode' : 'Play episode'}
                       >
                         {isPlaying ? <Pause size={20} /> : <Play size={20} />}
                       </button>
                       <button
-                        className="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                        className={`p-2 rounded-full transition-colors duration-200 ${
+                          isDark 
+                            ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' 
+                            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                        }`}
                         aria-label="Skip back 10 seconds"
                       >
                         <SkipBack size={20} />
                       </button>
                       <button
-                        className="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                        className={`p-2 rounded-full transition-colors duration-200 ${
+                          isDark 
+                            ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' 
+                            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                        }`}
                         aria-label="Skip forward 10 seconds"
                       >
                         <SkipForward size={20} />
                       </button>
                       <button
-                        className="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                        className={`p-2 rounded-full transition-colors duration-200 ${
+                          isDark 
+                            ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' 
+                            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                        }`}
                         aria-label="Volume control"
                       >
                         <Volume2 size={20} />
                       </button>
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                       {formatDuration(currentTime)} / {selectedEpisode.duration}
                     </div>
                   </div>
 
-                  <h2 id="main-episode-title" className="text-2xl font-bold text-gray-800 mb-2">
+                  <h2 id="main-episode-title" className={`text-2xl font-bold mb-2 ${isDark ? 'text-gray-100' : 'text-gray-800'}`}>
                     {selectedEpisode.title}
                   </h2>
                   
-                  <div className="flex flex-wrap items-center gap-4 text-gray-500 text-sm mb-4">
+                  <div className={`flex flex-wrap items-center gap-4 text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     <div className="flex items-center">
                       <Eye size={16} className="mr-1" aria-hidden="true" />
                       <span>{selectedEpisode.views} views</span>
@@ -279,13 +258,24 @@ const PodcastPage = () => {
                       <Calendar size={16} className="mr-1" aria-hidden="true" />
                       <span>{formatDate(selectedEpisode.publishedAt)}</span>
                     </div>
-                    <span className="text-xs font-semibold text-green-600 bg-blue-100 px-2 py-1 rounded-full">
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                      isDark 
+                        ? 'text-green-400 bg-green-900/30' 
+                        : 'text-green-600 bg-green-100'
+                    }`}>
                       {selectedEpisode.category}
                     </span>
                   </div>
                   
-                  <p className="text-gray-600 leading-relaxed">{selectedEpisode.description}</p>
+                  <p className={`leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {selectedEpisode.description}
+                  </p>
                 </div>
+              </div>
+            ) : (
+              <div className={`rounded-xl shadow-lg p-12 text-center transition-colors duration-300 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+                <p className={`text-lg ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No episodes available yet</p>
+                <p className={`text-sm mt-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Check back soon for new content!</p>
               </div>
             )}
           </section>
@@ -297,7 +287,7 @@ const PodcastPage = () => {
               <div className="relative">
                 <label htmlFor="episode-search" className="sr-only">Search episodes</label>
                 <Search 
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" 
+                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
                   size={20} 
                   aria-hidden="true"
                 />
@@ -305,7 +295,11 @@ const PodcastPage = () => {
                   id="episode-search"
                   type="text"
                   placeholder="Search episodes..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-700 focus:border-transparent transition-colors duration-200"
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-700 focus:border-transparent transition-colors duration-200 ${
+                    isDark 
+                      ? 'bg-gray-800 border-gray-700 text-gray-100 placeholder-gray-500' 
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                  }`}
                   value={searchTerm}
                   onChange={handleSearchChange}
                 />
@@ -313,8 +307,8 @@ const PodcastPage = () => {
               
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Filter size={20} className="text-gray-500 flex-shrink-0" aria-hidden="true" />
-                  <span className="text-sm font-medium text-gray-700">Filter by category:</span>
+                  <Filter size={20} className={`flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} aria-hidden="true" />
+                  <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Filter by category:</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {categories.map((category) => (
@@ -324,7 +318,10 @@ const PodcastPage = () => {
                       className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2
                         ${selectedCategory === category
                           ? 'bg-green-600 text-white'
-                          : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'}`}
+                          : isDark
+                            ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700'
+                            : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                        }`}
                       aria-pressed={selectedCategory === category}
                     >
                       {category}
@@ -336,7 +333,7 @@ const PodcastPage = () => {
 
             {/* Episode List */}
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              <h3 className={`text-lg font-semibold mb-3 ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
                 Episodes ({filteredEpisodes.length})
               </h3>
               <div className="max-h-[calc(100vh-400px)] overflow-y-auto space-y-2 pr-2">
@@ -344,7 +341,7 @@ const PodcastPage = () => {
                   <SidebarEpisodeCard key={episode.id} episode={episode} />
                 ))}
                 {filteredEpisodes.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     <Search size={48} className="mx-auto mb-4 opacity-50" />
                     <p>No episodes found</p>
                     <p className="text-sm mt-1">Try adjusting your search or filter</p>
@@ -357,11 +354,11 @@ const PodcastPage = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white mt-16">
+      <footer className={`mt-16 transition-colors duration-300 ${isDark ? 'bg-gray-950 text-white' : 'bg-gray-900 text-white'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <h3 className="text-xl font-bold mb-2">LeraTalk</h3>
-            <p className="text-gray-400 mb-4">Stay updated with the latest episodes</p>
+            <p className={`mb-4 ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>Stay updated with the latest episodes</p>
             <button className="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-medium transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900">
               Subscribe on YouTube
             </button>

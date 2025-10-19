@@ -13,8 +13,12 @@ export const uploadToCloudinary = async (file: File): Promise<CloudinaryUploadRe
     formData.append('file', file);
     formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!);
 
+    // Determine resource type based on file type
+    const isVideo = file.type.startsWith('video/');
+    const resourceType = isVideo ? 'video' : 'image';
+
     const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
       {
         method: 'POST',
         body: formData,
@@ -24,7 +28,7 @@ export const uploadToCloudinary = async (file: File): Promise<CloudinaryUploadRe
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        `Failed to upload image to Cloudinary: ${response.statusText}. Details: ${JSON.stringify(errorData)}`
+        `Failed to upload ${resourceType} to Cloudinary: ${response.statusText}. Details: ${JSON.stringify(errorData)}`
       );
     }
 
@@ -52,7 +56,7 @@ export const deleteFromCloudinary = async (publicId: string): Promise<void> => {
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        `Failed to delete image from Cloudinary: ${response.statusText}. Details: ${JSON.stringify(errorData)}`
+        `Failed to delete from Cloudinary: ${response.statusText}. Details: ${JSON.stringify(errorData)}`
       );
     }
   } catch (error) {
@@ -62,6 +66,7 @@ export const deleteFromCloudinary = async (publicId: string): Promise<void> => {
       : new Error('Unknown error occurred during Cloudinary deletion');
   }
 };
+
 export const extractPublicIdsFromContent = (contentJson: string): string[] => {
   try {
     const content = JSON.parse(contentJson);

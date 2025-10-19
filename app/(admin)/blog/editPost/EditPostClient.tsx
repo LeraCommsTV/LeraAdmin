@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { use } from 'react';
 import { Save, ArrowLeft, Upload, X, Loader, Eye } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -27,13 +26,11 @@ type BlogPost = {
 };
 
 interface EditPostClientProps {
-  searchParams: Promise<{ id?: string }>;
+  postId?: string;
 }
 
-export default function EditPostClient({ searchParams }: EditPostClientProps) {
-  const resolvedParams = use(searchParams);
+export default function EditPostClient({  postId }: EditPostClientProps) {
   const router = useRouter();
-  const postId = resolvedParams.id;
   const isEditing = !!postId;
 
   const [post, setPost] = useState<BlogPost>({
