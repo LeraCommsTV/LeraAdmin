@@ -14,6 +14,7 @@ import {
   convertFromRaw,
   DraftHandleValue,
   DraftEditorCommand,
+  SelectionState,
 } from 'draft-js';
 import {
   Bold,
@@ -28,6 +29,13 @@ import {
   X,
   Loader,
   Maximize2,
+  Check,
+  Type,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Maximize,
+  Minimize,
 } from 'lucide-react';
 import 'draft-js/dist/Draft.css';
 import { uploadToCloudinary, deleteFromCloudinary } from '@/lib/cloudinary';
@@ -39,11 +47,16 @@ interface RichTextEditorProps {
   className?: string;
 }
 
+type ImageSize = 'small' | 'medium' | 'large' | 'full';
+type ImageAlign = 'left' | 'center' | 'right';
+
 interface MediaData {
   src: string;
   type: 'image' | 'video';
   caption?: string;
   publicId?: string;
+  size?: ImageSize;
+  align?: ImageAlign;
 }
 
 // Custom block component for images and videos
@@ -52,20 +65,41 @@ const MediaComponent: React.FC<{
   contentState: any;
   blockProps: {
     onRemove: (blockKey: string, publicId?: string) => void;
-    onCaptionChange: (blockKey: string, caption: string) => void;
+    onSelect: (blockKey: string) => void;
+    selectedBlock: string | null;
   };
 }> = ({ block, contentState, blockProps }) => {
-  const entity = contentState.getEntity(block.getEntityAt(0));
-  const { src, type, caption = '', publicId } = entity.getData() as MediaData;
-  const [localCaption, setLocalCaption] = useState(caption);
-  const [isEditing, setIsEditing] = useState(false);
+  const entityKey = block.getEntityAt(0);
+  if (!entityKey) return null;
+
+  const entity = contentState.getEntity(entityKey);
+  const entityData = entity.getData() as MediaData;
+  const { src, type, publicId, caption = '', size = 'full', align = 'center' } = entityData;
+
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [loadStartTime] = useState(Date.now());
 
-  // Optimize Cloudinary URL for faster loading
+  const blockKey = block.getKey();
+  const isSelected = blockProps.selectedBlock === blockKey;
+
+  // Size mapping
+  const sizeMap = {
+    small: 'max-w-sm',
+    medium: 'max-w-2xl',
+    large: 'max-w-4xl',
+    full: 'w-full'
+  };
+
+  // Alignment mapping
+  const alignMap = {
+    left: 'mr-auto',
+    center: 'mx-auto',
+    right: 'ml-auto'
+  };
+
+  // Optimized Cloudinary URL
   const optimizedSrc = React.useMemo(() => {
     if (type === 'image' && src.includes('cloudinary.com')) {
       const urlParts = src.split('/upload/');
@@ -76,65 +110,73 @@ const MediaComponent: React.FC<{
     return src;
   }, [src, type]);
 
-  // Build display URL with retry counter
   const displaySrc = React.useMemo(() => {
     const base = type === 'image' ? optimizedSrc : src;
     const sep = base.includes('?') ? '&' : '?';
     return `${base}${sep}retry=${retryCount}`;
   }, [optimizedSrc, src, type, retryCount]);
 
-  // Timeout for loading
+  // Loading timeout
   useEffect(() => {
+    if (!isLoading) return;
     const timeout = setTimeout(() => {
       if (isLoading) {
         setIsLoading(false);
         setHasError(true);
-        console.error(`Image load timed out after 10s: ${src}`);
+        console.error(`Media load timed out: ${src}`);
       }
-    }, 10000); // 10s timeout
+    }, 10000);
     return () => clearTimeout(timeout);
-  }, [isLoading, src]);
+  }, [isLoading, src, retryCount]);
 
-  const handleCaptionSave = () => {
-    blockProps.onCaptionChange(block.getKey(), localCaption);
-    setIsEditing(false);
-  };
+  const handleRemove = useCallback(() => {
+    blockProps.onRemove(blockKey, publicId);
+  }, [blockKey, publicId, blockProps]);
 
-  const handleRemove = () => {
-    blockProps.onRemove(block.getKey(), publicId);
-  };
-
-  const handleMediaLoad = () => {
+  const handleMediaLoad = useCallback(() => {
     setIsLoading(false);
     setHasError(false);
-    console.log(`Media loaded successfully: ${src}`);
-  };
+  }, []);
 
-  const handleMediaError = (e: any) => {
-    console.error('Media load error:', e, 'URL:', src);
+  const handleMediaError = useCallback(() => {
     setIsLoading(false);
     setHasError(true);
-  };
+  }, []);
 
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     if (retryCount < 3) {
-      setRetryCount((c) => c + 1);
+      setRetryCount(c => c + 1);
       setIsLoading(true);
       setHasError(false);
-    } else {
-      console.error('Max retries reached for:', src);
     }
-  };
+  }, [retryCount]);
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    blockProps.onSelect(blockKey);
+  }, [blockKey, blockProps]);
+
+  const containerClass = type === 'image' 
+    ? `${sizeMap[size]} ${alignMap[align]}`
+    : 'w-full';
 
   return (
-    <>
-      <div className="relative my-6 group">
-        <div className="relative bg-gray-900 rounded-lg overflow-hidden border border-gray-700 shadow-lg">
+    <div 
+      className="relative my-6 group" 
+      contentEditable={false} 
+      suppressContentEditableWarning
+      onClick={handleClick}
+    >
+      <div className={`relative ${containerClass}`}>
+        <div className={`relative bg-gray-900 rounded-lg overflow-hidden border-2 shadow-lg transition-all ${
+          isSelected ? 'border-green-500 ring-2 ring-green-500/50' : 'border-gray-700'
+        }`}>
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
               <Loader className="animate-spin text-green-500" size={32} />
             </div>
           )}
+
           {hasError && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 z-10 p-4">
               <X className="text-red-500 mb-2" size={32} />
@@ -143,7 +185,8 @@ const MediaComponent: React.FC<{
               <div className="flex gap-2">
                 <button
                   onClick={handleRetry}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
+                  disabled={retryCount >= 3}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white text-sm rounded transition-colors"
                 >
                   Retry ({retryCount}/3)
                 </button>
@@ -157,10 +200,11 @@ const MediaComponent: React.FC<{
                 </a>
               </div>
               <p className="text-xs text-gray-600 mt-3 text-center max-w-sm">
-                If retry fails, check your Cloudinary settings or open the link directly.
+                If retry fails, check Cloudinary settings or try the direct link.
               </p>
             </div>
           )}
+
           {type === 'image' ? (
             <div className="relative">
               <img
@@ -176,7 +220,10 @@ const MediaComponent: React.FC<{
               />
               {!isLoading && !hasError && (
                 <button
-                  onClick={() => setIsFullscreen(true)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsFullscreen(true);
+                  }}
                   className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm"
                   title="View fullscreen"
                 >
@@ -201,64 +248,44 @@ const MediaComponent: React.FC<{
               </video>
             </div>
           )}
+
           <button
-            onClick={handleRemove}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRemove();
+            }}
             className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-lg z-20"
             title="Remove media"
           >
             <X size={18} />
           </button>
+
           <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <span className="text-white text-xs font-medium flex items-center gap-1">
               {type === 'image' ? <Image size={12} /> : <Video size={12} />}
               {type.toUpperCase()}
             </span>
           </div>
-        </div>
-        <div className="mt-3 px-1">
-          {isEditing ? (
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={localCaption}
-                onChange={(e) => setLocalCaption(e.target.value)}
-                placeholder="Add a caption..."
-                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleCaptionSave();
-                  else if (e.key === 'Escape') {
-                    setLocalCaption(caption);
-                    setIsEditing(false);
-                  }
-                }}
-                autoFocus
-              />
-              <button
-                onClick={handleCaptionSave}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg font-medium transition-colors"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => {
-                  setLocalCaption(caption);
-                  setIsEditing(false);
-                }}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded-lg font-medium transition-colors"
-              >
-                Cancel
-              </button>
+
+          {isSelected && (
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-green-500"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-green-500"></div>
+              <div className="absolute top-0 bottom-0 left-0 w-1 bg-green-500"></div>
+              <div className="absolute top-0 bottom-0 right-0 w-1 bg-green-500"></div>
             </div>
-          ) : (
-            <p
-              onClick={() => setIsEditing(true)}
-              className="text-gray-400 text-sm italic cursor-pointer hover:text-gray-300 transition-colors px-2 py-1 rounded hover:bg-gray-800/50"
-            >
-              {caption || 'Click to add caption...'}
-            </p>
           )}
         </div>
+
+        {/* Display Caption Below */}
+        {caption && (
+          <div className="mt-3 px-4 py-2.5 rounded-lg bg-gray-800/60 border border-gray-700">
+            <p className="text-sm text-gray-200 leading-relaxed">{caption}</p>
+          </div>
+        )}
       </div>
+
+      {/* Fullscreen Image Modal */}
       {isFullscreen && type === 'image' && (
         <div
           className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
@@ -267,6 +294,7 @@ const MediaComponent: React.FC<{
           <button
             onClick={() => setIsFullscreen(false)}
             className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full transition-colors"
+            title="Close (Esc)"
           >
             <X size={24} />
           </button>
@@ -277,13 +305,13 @@ const MediaComponent: React.FC<{
             onClick={(e) => e.stopPropagation()}
           />
           {caption && (
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 backdrop-blur-sm px-6 py-3 rounded-lg max-w-2xl">
-              <p className="text-white text-center">{caption}</p>
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 backdrop-blur-sm px-6 py-3 rounded-lg max-w-3xl mx-4">
+              <p className="text-white text-center text-sm leading-relaxed">{caption}</p>
             </div>
           )}
         </div>
       )}
-    </>
+    </div>
   );
 };
 
@@ -304,13 +332,41 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
     return EditorState.createEmpty();
   });
+
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
+  const [selectedBlockKey, setSelectedBlockKey] = useState<string | null>(null);
+  const [captionText, setCaptionText] = useState('');
+  const [imageSize, setImageSize] = useState<ImageSize>('full');
+  const [imageAlign, setImageAlign] = useState<ImageAlign>('center');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<Editor>(null);
+
+  // Update caption, size, and align when selection changes
+  useEffect(() => {
+    if (selectedBlockKey) {
+      const contentState = editorState.getCurrentContent();
+      const block = contentState.getBlockForKey(selectedBlockKey);
+      if (block && block.getType() === 'atomic') {
+        const entityKey = block.getEntityAt(0);
+        if (entityKey) {
+          const entity = contentState.getEntity(entityKey);
+          const data = entity.getData() as MediaData;
+          setCaptionText(data.caption || '');
+          setImageSize(data.size || 'full');
+          setImageAlign(data.align || 'center');
+        }
+      }
+    } else {
+      setCaptionText('');
+      setImageSize('full');
+      setImageAlign('center');
+    }
+  }, [selectedBlockKey, editorState]);
 
   const handleEditorChange = useCallback((newEditorState: EditorState) => {
     setEditorState(newEditorState);
@@ -362,21 +418,16 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     setIsUploading(true);
     setUploadProgress(`Uploading ${type}...`);
 
-    // Validate file size (10MB limit)
     if (file.size > 10 * 1024 * 1024) {
-      setUploadProgress('✗ File too large. Maximum size is 10MB.');
+      setUploadProgress('✗ File too large. Max 10MB.');
       setTimeout(() => setUploadProgress(''), 5000);
       setIsUploading(false);
       return;
     }
 
     try {
-      console.log('Starting upload:', { name: file.name, type, size: file.size });
       const result = await uploadToCloudinary(file);
-      console.log('Upload result:', result);
-      if (!result || !result.url) {
-        throw new Error('Invalid upload result: missing URL');
-      }
+      if (!result?.url) throw new Error('Upload failed');
 
       const contentState = editorState.getCurrentContent();
       const contentStateWithEntity = contentState.createEntity('MEDIA', 'IMMUTABLE', {
@@ -384,17 +435,19 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         type,
         publicId: result.publicId,
         caption: '',
+        size: 'full',
+        align: 'center',
       });
       const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
-      console.log('Entity created:', { src: result.url, type, publicId: result.publicId });
       const newEditorState = EditorState.set(editorState, { currentContent: contentStateWithEntity });
+
       handleEditorChange(AtomicBlockUtils.insertAtomicBlock(newEditorState, entityKey, ' '));
-      setUploadProgress('✓ Upload complete!');
+
+      setUploadProgress('✓ Uploaded successfully!');
       setTimeout(() => setUploadProgress(''), 2000);
     } catch (error) {
       console.error('Upload error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setUploadProgress(`✗ Upload failed: ${errorMessage}`);
+      setUploadProgress(`✗ Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setTimeout(() => setUploadProgress(''), 5000);
     } finally {
       setIsUploading(false);
@@ -403,11 +456,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (file && validTypes.includes(file.type)) {
+    if (file && ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
       addMedia(file, 'image');
     } else {
-      setUploadProgress('✗ Invalid file type. Use JPEG, PNG, GIF, or WebP.');
+      setUploadProgress('✗ Invalid image type.');
       setTimeout(() => setUploadProgress(''), 5000);
     }
     e.target.value = '';
@@ -415,193 +467,288 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    const validTypes = ['video/mp4', 'video/webm', 'video/ogg'];
-    if (file && validTypes.includes(file.type)) {
+    if (file && ['video/mp4', 'video/webm', 'video/ogg'].includes(file.type)) {
       addMedia(file, 'video');
     } else {
-      setUploadProgress('✗ Invalid file type. Use MP4, WebM, or OGG.');
+      setUploadProgress('✗ Invalid video type.');
       setTimeout(() => setUploadProgress(''), 5000);
     }
     e.target.value = '';
   };
 
-  const removeMediaBlock = async (blockKey: string, publicId?: string) => {
+  const removeMediaBlock = useCallback(async (blockKey: string, publicId?: string) => {
     if (publicId) {
       try {
         await deleteFromCloudinary(publicId);
-        console.log('Deleted from Cloudinary:', publicId);
       } catch (error) {
-        console.error('Error deleting from Cloudinary:', error);
+        console.error('Delete from Cloudinary failed:', error);
       }
     }
+
     const contentState = editorState.getCurrentContent();
     const blockMap = contentState.getBlockMap().delete(blockKey);
     const newContentState = contentState.set('blockMap', blockMap) as ContentState;
-    handleEditorChange(EditorState.push(editorState, newContentState, 'remove-range'));
-  };
+    const newEditorState = EditorState.push(editorState, newContentState, 'remove-range');
+    handleEditorChange(newEditorState);
+    
+    if (selectedBlockKey === blockKey) {
+      setSelectedBlockKey(null);
+    }
+  }, [editorState, handleEditorChange, selectedBlockKey]);
 
-  const updateMediaCaption = (blockKey: string, caption: string) => {
+  const handleBlockSelect = useCallback((blockKey: string) => {
+    setSelectedBlockKey(blockKey);
+  }, []);
+
+  const updateMediaSettings = useCallback(() => {
+    if (!selectedBlockKey) return;
+
     const contentState = editorState.getCurrentContent();
-    const block = contentState.getBlockForKey(blockKey);
+    const block = contentState.getBlockForKey(selectedBlockKey);
+    
+    if (!block || block.getType() !== 'atomic') return;
+    
     const entityKey = block.getEntityAt(0);
-    const entity = contentState.getEntity(entityKey);
-    const newData = { ...entity.getData(), caption };
-    const newContentState = contentState.replaceEntityData(entityKey, newData);
-    handleEditorChange(EditorState.push(editorState, newContentState, 'apply-entity'));
-  };
+    if (!entityKey) return;
 
-  const blockRendererFn = (block: any) => {
-    console.log('Rendering block:', block.getType());
+    const entity = contentState.getEntity(entityKey);
+    const data = entity.getData() as MediaData;
+
+    // Only update size and align for images
+    const updates: Partial<MediaData> = { 
+      caption: captionText.trim() 
+    };
+
+    if (data.type === 'image') {
+      updates.size = imageSize;
+      updates.align = imageAlign;
+    }
+
+    const newContentState = contentState.mergeEntityData(entityKey, updates);
+    
+    const newEditorState = EditorState.push(
+      editorState, 
+      newContentState, 
+      'apply-entity'
+    );
+    
+    handleEditorChange(newEditorState);
+  }, [selectedBlockKey, captionText, imageSize, imageAlign, editorState, handleEditorChange]);
+
+  const blockRendererFn = useCallback((block: any) => {
     if (block.getType() === 'atomic') {
       return {
         component: MediaComponent,
         editable: false,
         props: {
           onRemove: removeMediaBlock,
-          onCaptionChange: updateMediaCaption,
+          onSelect: handleBlockSelect,
+          selectedBlock: selectedBlockKey,
         },
       };
     }
     return null;
-  };
+  }, [removeMediaBlock, handleBlockSelect, selectedBlockKey]);
 
   const currentStyle = editorState.getCurrentInlineStyle();
   const currentBlockType = RichUtils.getCurrentBlockType(editorState);
 
+  // Check if selected block is an image
+  const isImageSelected = React.useMemo(() => {
+    if (!selectedBlockKey) return false;
+    const contentState = editorState.getCurrentContent();
+    const block = contentState.getBlockForKey(selectedBlockKey);
+    if (block && block.getType() === 'atomic') {
+      const entityKey = block.getEntityAt(0);
+      if (entityKey) {
+        const entity = contentState.getEntity(entityKey);
+        const data = entity.getData() as MediaData;
+        return data.type === 'image';
+      }
+    }
+    return false;
+  }, [selectedBlockKey, editorState]);
+
   return (
     <div className={`border border-gray-600 rounded-lg bg-gray-800 shadow-xl ${className}`}>
+      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-1 p-3 border-b border-gray-700 bg-gray-800">
         <div className="flex items-center gap-1 mr-4">
-          <button
-            onMouseDown={(e) => {
-              e.preventDefault();
-              toggleInlineStyle('BOLD');
-            }}
-            className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${
-              currentStyle.has('BOLD') ? 'bg-gray-700 text-green-400' : 'text-gray-300'
-            }`}
-            title="Bold (Ctrl+B)"
-          >
-            <Bold size={18} />
-          </button>
-          <button
-            onMouseDown={(e) => {
-              e.preventDefault();
-              toggleInlineStyle('ITALIC');
-            }}
-            className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${
-              currentStyle.has('ITALIC') ? 'bg-gray-700 text-green-400' : 'text-gray-300'
-            }`}
-            title="Italic (Ctrl+I)"
-          >
-            <Italic size={18} />
-          </button>
-          <button
-            onMouseDown={(e) => {
-              e.preventDefault();
-              toggleInlineStyle('UNDERLINE');
-            }}
-            className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${
-              currentStyle.has('UNDERLINE') ? 'bg-gray-700 text-green-400' : 'text-gray-300'
-            }`}
-            title="Underline (Ctrl+U)"
-          >
-            <Underline size={18} />
-          </button>
+          <button onMouseDown={(e) => { e.preventDefault(); toggleInlineStyle('BOLD'); }} className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${currentStyle.has('BOLD') ? 'bg-gray-700 text-green-400' : 'text-gray-300'}`} title="Bold (Ctrl+B)"><Bold size={18} /></button>
+          <button onMouseDown={(e) => { e.preventDefault(); toggleInlineStyle('ITALIC'); }} className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${currentStyle.has('ITALIC') ? 'bg-gray-700 text-green-400' : 'text-gray-300'}`} title="Italic (Ctrl+I)"><Italic size={18} /></button>
+          <button onMouseDown={(e) => { e.preventDefault(); toggleInlineStyle('UNDERLINE'); }} className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${currentStyle.has('UNDERLINE') ? 'bg-gray-700 text-green-400' : 'text-gray-300'}`} title="Underline (Ctrl+U)"><Underline size={18} /></button>
         </div>
+
         <div className="flex items-center gap-1 mr-4">
-          <button
-            onMouseDown={(e) => {
-              e.preventDefault();
-              toggleBlockType('header-one');
-            }}
-            className={`px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-bold ${
-              currentBlockType === 'header-one' ? 'bg-gray-700 text-green-400' : 'text-gray-300'
-            }`}
-            title="Heading 1"
-          >
-            H1
-          </button>
-          <button
-            onMouseDown={(e) => {
-              e.preventDefault();
-              toggleBlockType('header-two');
-            }}
-            className={`px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-bold ${
-              currentBlockType === 'header-two' ? 'bg-gray-700 text-green-400' : 'text-gray-300'
-            }`}
-            title="Heading 2"
-          >
-            H2
-          </button>
-          <button
-            onMouseDown={(e) => {
-              e.preventDefault();
-              toggleBlockType('unordered-list-item');
-            }}
-            className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${
-              currentBlockType === 'unordered-list-item' ? 'bg-gray-700 text-green-400' : 'text-gray-300'
-            }`}
-            title="Bullet List"
-          >
-            <List size={18} />
-          </button>
-          <button
-            onMouseDown={(e) => {
-              e.preventDefault();
-              toggleBlockType('ordered-list-item');
-            }}
-            className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${
-              currentBlockType === 'ordered-list-item' ? 'bg-gray-700 text-green-400' : 'text-gray-300'
-            }`}
-            title="Numbered List"
-          >
-            <ListOrdered size={18} />
-          </button>
-          <button
-            onMouseDown={(e) => {
-              e.preventDefault();
-              toggleBlockType('blockquote');
-            }}
-            className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${
-              currentBlockType === 'blockquote' ? 'bg-gray-700 text-green-400' : 'text-gray-300'
-            }`}
-            title="Quote"
-          >
-            <Quote size={18} />
-          </button>
+          <button onMouseDown={(e) => { e.preventDefault(); toggleBlockType('header-one'); }} className={`px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-bold ${currentBlockType === 'header-one' ? 'bg-gray-700 text-green-400' : 'text-gray-300'}`} title="Heading 1">H1</button>
+          <button onMouseDown={(e) => { e.preventDefault(); toggleBlockType('header-two'); }} className={`px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm font-bold ${currentBlockType === 'header-two' ? 'bg-gray-700 text-green-400' : 'text-gray-300'}`} title="Heading 2">H2</button>
+          <button onMouseDown={(e) => { e.preventDefault(); toggleBlockType('unordered-list-item'); }} className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${currentBlockType === 'unordered-list-item' ? 'bg-gray-700 text-green-400' : 'text-gray-300'}`} title="Bullet List"><List size={18} /></button>
+          <button onMouseDown={(e) => { e.preventDefault(); toggleBlockType('ordered-list-item'); }} className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${currentBlockType === 'ordered-list-item' ? 'bg-gray-700 text-green-400' : 'text-gray-300'}`} title="Numbered List"><ListOrdered size={18} /></button>
+          <button onMouseDown={(e) => { e.preventDefault(); toggleBlockType('blockquote'); }} className={`p-2 rounded-lg hover:bg-gray-700 transition-colors ${currentBlockType === 'blockquote' ? 'bg-gray-700 text-green-400' : 'text-gray-300'}`} title="Quote"><Quote size={18} /></button>
         </div>
+
         <div className="flex items-center gap-1 mr-4">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="p-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Add Image"
-          >
+          <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="p-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 disabled:opacity-50" title="Add Image">
             {isUploading ? <Loader size={18} className="animate-spin" /> : <Image size={18} />}
           </button>
-          <button
-            onClick={() => videoInputRef.current?.click()}
-            disabled={isUploading}
-            className="p-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Add Video"
-          >
-            <Video size={18} />
-          </button>
-          <button
-            onClick={() => setShowLinkInput(true)}
-            className="p-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-300"
-            title="Add Link (Ctrl+K)"
-          >
-            <Link size={18} />
-          </button>
+          <button onClick={() => videoInputRef.current?.click()} disabled={isUploading} className="p-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 disabled:opacity-50" title="Add Video"><Video size={18} /></button>
+          <button onClick={() => setShowLinkInput(true)} className="p-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-300" title="Add Link (Ctrl+K)"><Link size={18} /></button>
         </div>
+
         {uploadProgress && (
           <div className="ml-auto px-3 py-1 bg-gray-700 rounded-full text-sm text-gray-200 font-medium">
             {uploadProgress}
           </div>
         )}
       </div>
+
+      {/* Media Settings Panel - Shows when media is selected */}
+      {selectedBlockKey && (
+        <div className="p-4 border-b border-gray-700 bg-gray-900">
+          {/* Caption Input */}
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Type size={16} className="text-green-500" />
+              <span className="font-medium text-sm text-gray-300">Caption</span>
+            </div>
+            <input
+              type="text"
+              value={captionText}
+              onChange={(e) => setCaptionText(e.target.value)}
+              placeholder="Add a caption..."
+              maxLength={200}
+              className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  updateMediaSettings();
+                }
+              }}
+            />
+            <div className="mt-1 text-xs text-gray-500">
+              {captionText.length}/200 characters
+            </div>
+          </div>
+
+          {/* Image Size and Alignment Controls - Only for images */}
+          {isImageSelected && (
+            <>
+              {/* Size Controls */}
+              <div className="mb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Maximize size={16} className="text-green-500" />
+                  <span className="font-medium text-sm text-gray-300">Size</span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setImageSize('small')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      imageSize === 'small'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    <Minimize size={14} className="inline mr-1" />
+                    Small
+                  </button>
+                  <button
+                    onClick={() => setImageSize('medium')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      imageSize === 'medium'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    Medium
+                  </button>
+                  <button
+                    onClick={() => setImageSize('large')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      imageSize === 'large'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    Large
+                  </button>
+                  <button
+                    onClick={() => setImageSize('full')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      imageSize === 'full'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    <Maximize size={14} className="inline mr-1" />
+                    Full
+                  </button>
+                </div>
+              </div>
+
+              {/* Alignment Controls */}
+              <div className="mb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlignCenter size={16} className="text-green-500" />
+                  <span className="font-medium text-sm text-gray-300">Alignment</span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setImageAlign('left')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      imageAlign === 'left'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    <AlignLeft size={16} className="inline mr-1" />
+                    Left
+                  </button>
+                  <button
+                    onClick={() => setImageAlign('center')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      imageAlign === 'center'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    <AlignCenter size={16} className="inline mr-1" />
+                    Center
+                  </button>
+                  <button
+                    onClick={() => setImageAlign('right')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      imageAlign === 'right'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    <AlignRight size={16} className="inline mr-1" />
+                    Right
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <button 
+              onClick={updateMediaSettings}
+              className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+            >
+              <Check size={16} />
+              Apply Changes
+            </button>
+            <button 
+              onClick={() => setSelectedBlockKey(null)}
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Link Input */}
       {showLinkInput && (
         <div className="p-3 border-b border-gray-700 bg-gray-800">
           <div className="flex gap-2">
@@ -610,35 +757,24 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
               value={linkUrl}
               onChange={(e) => setLinkUrl(e.target.value)}
               placeholder="https://example.com"
-              className="flex-1 px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="flex-1 px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') addLink();
-                else if (e.key === 'Escape') {
-                  setShowLinkInput(false);
-                  setLinkUrl('');
-                }
+                if (e.key === 'Escape') { setShowLinkInput(false); setLinkUrl(''); }
               }}
               autoFocus
             />
-            <button
-              onClick={addLink}
-              className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
-            >
-              Add
-            </button>
-            <button
-              onClick={() => {
-                setShowLinkInput(false);
-                setLinkUrl('');
-              }}
-              className="px-5 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
-            >
-              Cancel
-            </button>
+            <button onClick={addLink} className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">Add</button>
+            <button onClick={() => { setShowLinkInput(false); setLinkUrl(''); }} className="px-5 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium">Cancel</button>
           </div>
         </div>
       )}
-      <div className="min-h-[300px] p-5">
+
+      {/* Editor */}
+      <div 
+        className="min-h-[300px] p-5"
+        onClick={() => setSelectedBlockKey(null)}
+      >
         <Editor
           ref={editorRef}
           editorState={editorState}
@@ -650,48 +786,19 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           spellCheck={true}
         />
       </div>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/gif,image/webp"
-        onChange={handleImageUpload}
-        className="hidden"
-      />
-      <input
-        ref={videoInputRef}
-        type="file"
-        accept="video/mp4,video/webm,video/ogg"
-        onChange={handleVideoUpload}
-        className="hidden"
-      />
+
+      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" onChange={handleImageUpload} className="hidden" />
+      <input ref={videoInputRef} type="file" accept="video/mp4,video/webm,video/ogg" onChange={handleVideoUpload} className="hidden" />
+
       <style jsx global>{`
-        .DraftEditor-root {
-          position: relative;
-        }
-        .DraftEditor-editorContainer {
-          position: relative;
-          z-index: 1;
-        }
         .public-DraftEditor-content {
           min-height: 250px;
           color: white;
           font-size: 16px;
           line-height: 1.7;
         }
-        .public-DraftEditor-content h1 {
-          font-size: 2.25rem;
-          font-weight: 700;
-          margin: 1.5rem 0 1rem;
-          color: white;
-          line-height: 1.2;
-        }
-        .public-DraftEditor-content h2 {
-          font-size: 1.75rem;
-          font-weight: 600;
-          margin: 1.25rem 0 0.75rem;
-          color: white;
-          line-height: 1.3;
-        }
+        .public-DraftEditor-content h1 { font-size: 2.25rem; font-weight: 700; margin: 1.5rem 0 1rem; }
+        .public-DraftEditor-content h2 { font-size: 1.75rem; font-weight: 600; margin: 1.25rem 0 0.75rem; }
         .public-DraftEditor-content blockquote {
           border-left: 4px solid #10b981;
           padding-left: 1.25rem;
@@ -703,31 +810,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           border-radius: 0 0.5rem 0.5rem 0;
         }
         .public-DraftEditor-content ul,
-        .public-DraftEditor-content ol {
-          margin: 1rem 0;
-          padding-left: 2rem;
-        }
-        .public-DraftEditor-content li {
-          margin: 0.5rem 0;
-        }
-        .public-DraftEditor-content a {
-          color: #10b981;
-          text-decoration: underline;
-          transition: color 0.2s;
-        }
-        .public-DraftEditor-content a:hover {
-          color: #059669;
-        }
-        .public-DraftStyleDefault-block {
-          margin: 0.75rem 0;
-        }
-        .public-DraftEditor-content [data-contents="true"] {
-          line-height: 1.7;
-        }
-        .public-DraftEditorPlaceholder-root {
-          color: #6b7280;
-          position: absolute;
-        }
+        .public-DraftEditor-content ol { margin: 1rem 0; padding-left: 2rem; }
+        .public-DraftEditor-content a { color: #10b981; text-decoration: underline; }
+        .public-DraftEditor-content a:hover { color: #059669; }
+        .public-DraftStyleDefault-block { margin: 0.75rem 0; }
       `}</style>
     </div>
   );
