@@ -278,9 +278,9 @@ const MediaComponent: React.FC<{
         </div>
 
         {/* Display Caption Below */}
-        {caption && (
-          <div className="mt-3 px-4 py-2.5 rounded-lg bg-gray-800/60 border border-gray-700">
-            <p className="text-sm text-gray-200 leading-relaxed">{caption}</p>
+       {caption && (
+          <div className="mt-4 px-1">
+            <p className="text-sm text-gray-400 leading-relaxed text-center italic">{caption}</p>
           </div>
         )}
       </div>
