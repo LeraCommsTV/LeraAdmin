@@ -277,7 +277,7 @@ const Footer = () => {
           </Link>
         </div>
         <p className={bottomFooter}>
-          © 2025 Lera Communication Consult. All rights reserved
+          © 2026 Lera Communication Consult. All rights reserved
         </p>
       </div>
     </div>
