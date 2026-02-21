@@ -15,6 +15,8 @@ import {
   DraftHandleValue,
   DraftEditorCommand,
   SelectionState,
+  CompositeDecorator,
+  Modifier,
 } from 'draft-js';
 import {
   Bold,
@@ -36,6 +38,7 @@ import {
   AlignRight,
   Maximize,
   Minimize,
+  Link2,
 } from 'lucide-react';
 import 'draft-js/dist/Draft.css';
 import { uploadToCloudinary, deleteFromCloudinary } from '@/lib/cloudinary';
@@ -58,6 +61,28 @@ interface MediaData {
   size?: ImageSize;
   align?: ImageAlign;
 }
+
+// Link decorator - renders links as clickable <a> tags
+const LinkComponent: React.FC<{ children: React.ReactNode; entityKey: string; contentState: any }> = ({ children, entityKey, contentState }) => {
+  const entity = contentState.getEntity(entityKey);
+  const { url } = entity.getData();
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 underline">
+      {children}
+    </a>
+  );
+};
+
+const findLinkEntities = (contentBlock: any, callback: (start: number, end: number) => void, contentState: any) => {
+  contentBlock.findEntityRanges((character: any) => {
+    const entityKey = character.getEntity();
+    return entityKey !== null && contentState.getEntity(entityKey).getType() === 'LINK';
+  }, callback);
+};
+
+const linkDecorator = new CompositeDecorator([
+  { strategy: findLinkEntities, component: LinkComponent as any },
+]);
 
 // Custom block component for images and videos
 const MediaComponent: React.FC<{
@@ -325,16 +350,21 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     if (value) {
       try {
         const contentState = convertFromRaw(JSON.parse(value));
-        return EditorState.createWithContent(contentState);
+        return EditorState.createWithContent(contentState, linkDecorator);
       } catch (error) {
         console.error('Error parsing editor content:', error);
       }
     }
-    return EditorState.createEmpty();
+    return EditorState.createEmpty(linkDecorator);
   });
 
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  const [linkText, setLinkText] = useState('');
+  const [showImageUrlInput, setShowImageUrlInput] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const [editingExistingLink, setEditingExistingLink] = useState(false);
+  const linkSelectionRef = useRef<SelectionState | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [selectedBlockKey, setSelectedBlockKey] = useState<string | null>(null);
@@ -345,6 +375,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<Editor>(null);
+  const editorStateRef = useRef(editorState);
+  editorStateRef.current = editorState;
 
   // Update caption, size, and align when selection changes
   useEffect(() => {
@@ -384,7 +416,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   const handleKeyCommand = (command: string): DraftHandleValue => {
     if (command === 'add-link') {
-      setShowLinkInput(true);
+      openLinkInput();
       return 'handled';
     }
     const newState = RichUtils.handleKeyCommand(editorState, command as DraftEditorCommand);
@@ -403,18 +435,143 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     handleEditorChange(RichUtils.toggleBlockType(editorState, blockType));
   };
 
-  const addLink = () => {
-    if (!linkUrl.trim()) return;
+  const getSelectedLink = useCallback(() => {
+    const selection = editorState.getSelection();
     const contentState = editorState.getCurrentContent();
-    const contentStateWithEntity = contentState.createEntity('LINK', 'MUTABLE', { url: linkUrl });
+    const startKey = selection.getStartKey();
+    const startOffset = selection.getStartOffset();
+    const block = contentState.getBlockForKey(startKey);
+    if (!block) return null;
+    const entityKey = block.getEntityAt(startOffset);
+    if (!entityKey) return null;
+    const entity = contentState.getEntity(entityKey);
+    if (entity.getType() === 'LINK') {
+      return { entityKey, url: entity.getData().url };
+    }
+    return null;
+  }, [editorState]);
+
+  const getLinkSelectionRange = useCallback(() => {
+    const link = getSelectedLink();
+    if (!link) return null;
+    const selection = editorState.getSelection();
+    const contentState = editorState.getCurrentContent();
+    const block = contentState.getBlockForKey(selection.getStartKey());
+    if (!block) return selection;
+    const startOffset = selection.getStartOffset();
+    let linkStart = startOffset;
+    let linkEnd = startOffset;
+    for (let i = startOffset; i >= 0; i--) {
+      if (block.getEntityAt(i) === link.entityKey) linkStart = i;
+      else break;
+    }
+    for (let i = startOffset; i < block.getLength(); i++) {
+      if (block.getEntityAt(i) === link.entityKey) linkEnd = i + 1;
+      else break;
+    }
+    return selection.merge({
+      anchorOffset: linkStart,
+      focusOffset: linkEnd,
+    });
+  }, [editorState, getSelectedLink]);
+
+  const openLinkInput = useCallback(() => {
+    const existing = getSelectedLink();
+    const selection = editorState.getSelection();
+    setLinkUrl(existing?.url || '');
+    setEditingExistingLink(!!existing);
+    linkSelectionRef.current = existing ? getLinkSelectionRange() : selection;
+    // Pre-fill link text from selection when adding new link (not editing)
+    if (!existing && !selection.isCollapsed()) {
+      const contentState = editorState.getCurrentContent();
+      const selectedText = contentState.getBlockForKey(selection.getStartKey()).getText().slice(selection.getStartOffset(), selection.getEndOffset());
+      setLinkText(selectedText);
+    } else {
+      setLinkText('');
+    }
+    setShowLinkInput(true);
+  }, [getSelectedLink, getLinkSelectionRange, editorState]);
+
+  const addLink = () => {
+    const url = linkUrl.trim();
+    if (!url) return;
+
+    const contentState = editorState.getCurrentContent();
+    const selection = linkSelectionRef.current || editorState.getSelection();
+    const contentStateWithEntity = contentState.createEntity('LINK', 'MUTABLE', { url });
     const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
-    const newEditorState = EditorState.set(editorState, { currentContent: contentStateWithEntity });
-    handleEditorChange(RichUtils.toggleLink(newEditorState, newEditorState.getSelection(), entityKey));
+
+    if (selection.isCollapsed()) {
+      // Insert new link at cursor (no text selected)
+      const textToInsert = linkText.trim() || url;
+      const newContentState = Modifier.insertText(contentStateWithEntity, selection, textToInsert, undefined, entityKey);
+      const newEditorState = EditorState.push(editorState, newContentState, 'insert-characters');
+      handleEditorChange(newEditorState);
+    } else {
+      // Apply link to selected text
+      const newEditorState = EditorState.set(editorState, { currentContent: contentStateWithEntity });
+      handleEditorChange(RichUtils.toggleLink(newEditorState, selection, entityKey));
+    }
+
     setShowLinkInput(false);
     setLinkUrl('');
+    setLinkText('');
   };
 
-  const addMedia = async (file: File, type: 'image' | 'video') => {
+  const removeLink = useCallback(() => {
+    const selection = linkSelectionRef.current || editorState.getSelection();
+    if (selection && !selection.isCollapsed()) {
+      const contentState = editorState.getCurrentContent();
+      const newContentState = Modifier.applyEntity(contentState, selection, null);
+      handleEditorChange(EditorState.push(editorState, newContentState, 'apply-entity'));
+    }
+    setShowLinkInput(false);
+    setLinkUrl('');
+    setEditingExistingLink(false);
+    linkSelectionRef.current = null;
+  }, [editorState, handleEditorChange]);
+
+  const insertImageFromUrl = useCallback(async (url: string) => {
+    const trimmed = url.trim();
+    if (!trimmed) return;
+    try {
+      const contentState = editorState.getCurrentContent();
+      const contentStateWithEntity = contentState.createEntity('MEDIA', 'IMMUTABLE', {
+        src: trimmed,
+        type: 'image',
+        caption: '',
+        size: 'full',
+        align: 'center',
+      });
+      const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
+      const newEditorState = EditorState.set(editorState, { currentContent: contentStateWithEntity });
+      handleEditorChange(AtomicBlockUtils.insertAtomicBlock(newEditorState, entityKey, ' '));
+      setShowImageUrlInput(false);
+      setImageUrl('');
+    } catch (error) {
+      console.error('Insert image from URL failed:', error);
+      setUploadProgress('✗ Invalid image URL');
+      setTimeout(() => setUploadProgress(''), 5000);
+    }
+  }, [editorState, handleEditorChange]);
+
+  const insertMediaBlock = useCallback((state: EditorState, data: { src: string; type: 'image' | 'video'; publicId?: string }) => {
+    const contentState = state.getCurrentContent();
+    const contentStateWithEntity = contentState.createEntity('MEDIA', 'IMMUTABLE', {
+      src: data.src,
+      type: data.type,
+      publicId: data.publicId,
+      caption: '',
+      size: 'full',
+      align: 'center',
+    });
+    const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
+    const newEditorState = EditorState.set(state, { currentContent: contentStateWithEntity });
+    return AtomicBlockUtils.insertAtomicBlock(newEditorState, entityKey, ' ');
+  }, []);
+
+  const addMedia = useCallback(async (file: File, type: 'image' | 'video', baseState?: EditorState) => {
+    const stateToUse = baseState ?? editorState;
     setIsUploading(true);
     setUploadProgress(`Uploading ${type}...`);
 
@@ -422,28 +579,67 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       setUploadProgress('✗ File too large. Max 10MB.');
       setTimeout(() => setUploadProgress(''), 5000);
       setIsUploading(false);
-      return;
+      return stateToUse;
     }
 
     try {
       const result = await uploadToCloudinary(file);
       if (!result?.url) throw new Error('Upload failed');
 
-      const contentState = editorState.getCurrentContent();
-      const contentStateWithEntity = contentState.createEntity('MEDIA', 'IMMUTABLE', {
+      const newState = insertMediaBlock(stateToUse, {
         src: result.url,
         type,
         publicId: result.publicId,
-        caption: '',
-        size: 'full',
-        align: 'center',
       });
-      const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
-      const newEditorState = EditorState.set(editorState, { currentContent: contentStateWithEntity });
-
-      handleEditorChange(AtomicBlockUtils.insertAtomicBlock(newEditorState, entityKey, ' '));
-
+      editorStateRef.current = newState;
+      handleEditorChange(newState);
       setUploadProgress('✓ Uploaded successfully!');
+      setTimeout(() => setUploadProgress(''), 2000);
+      return newState;
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadProgress(`✗ Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setTimeout(() => setUploadProgress(''), 5000);
+      return stateToUse;
+    } finally {
+      setIsUploading(false);
+    }
+  }, [editorState, insertMediaBlock, handleEditorChange]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const validFiles = files.filter(f => validTypes.includes(f.type));
+    if (validFiles.length === 0) {
+      setUploadProgress('✗ Invalid image type.');
+      setTimeout(() => setUploadProgress(''), 5000);
+      e.target.value = '';
+      return;
+    }
+    if (validFiles.length > 1) setUploadProgress(`Uploading ${validFiles.length} images...`);
+    else setUploadProgress('Uploading image...');
+    setIsUploading(true);
+    try {
+      let currentEditorState = editorState;
+      for (const file of validFiles) {
+        const result = await uploadToCloudinary(file);
+        if (!result?.url) continue;
+        const contentState = currentEditorState.getCurrentContent();
+        const contentStateWithEntity = contentState.createEntity('MEDIA', 'IMMUTABLE', {
+          src: result.url,
+          type: 'image',
+          publicId: result.publicId,
+          caption: '',
+          size: 'full',
+          align: 'center',
+        });
+        const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
+        const newEditorState = EditorState.set(currentEditorState, { currentContent: contentStateWithEntity });
+        currentEditorState = AtomicBlockUtils.insertAtomicBlock(newEditorState, entityKey, ' ');
+      }
+      handleEditorChange(currentEditorState);
+      setUploadProgress(validFiles.length > 1 ? `✓ Uploaded ${validFiles.length} images!` : '✓ Uploaded successfully!');
       setTimeout(() => setUploadProgress(''), 2000);
     } catch (error) {
       console.error('Upload error:', error);
@@ -451,18 +647,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       setTimeout(() => setUploadProgress(''), 5000);
     } finally {
       setIsUploading(false);
+      e.target.value = '';
     }
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
-      addMedia(file, 'image');
-    } else {
-      setUploadProgress('✗ Invalid image type.');
-      setTimeout(() => setUploadProgress(''), 5000);
-    }
-    e.target.value = '';
   };
 
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -588,11 +774,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         </div>
 
         <div className="flex items-center gap-1 mr-4">
-          <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="p-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 disabled:opacity-50" title="Add Image">
-            {isUploading ? <Loader size={18} className="animate-spin" /> : <Image size={18} />}
+          <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="p-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 disabled:opacity-50" title="Add Image (or drag & drop, paste)">{
+            isUploading ? <Loader size={18} className="animate-spin" /> : <Image size={18} />}
           </button>
+          <button onClick={() => setShowImageUrlInput(true)} className="p-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-300" title="Insert Image from URL"><Link2 size={18} /></button>
           <button onClick={() => videoInputRef.current?.click()} disabled={isUploading} className="p-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 disabled:opacity-50" title="Add Video"><Video size={18} /></button>
-          <button onClick={() => setShowLinkInput(true)} className="p-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-300" title="Add Link (Ctrl+K)"><Link size={18} /></button>
+          <button onClick={openLinkInput} className="p-2 rounded-lg hover:bg-gray-700 transition-colors text-gray-300" title="Add/Edit Link (Ctrl+K)"><Link size={18} /></button>
         </div>
 
         {uploadProgress && (
@@ -751,22 +938,71 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       {/* Link Input */}
       {showLinkInput && (
         <div className="p-3 border-b border-gray-700 bg-gray-800">
-          <div className="flex gap-2">
+          {!editingExistingLink && (
+            <div className="mb-2">
+              <label className="block text-xs text-gray-500 mb-1">Link text (optional when inserting at cursor — blank uses URL)</label>
+              <input
+                type="text"
+                value={linkText}
+                onChange={(e) => setLinkText(e.target.value)}
+                placeholder="e.g. Click here"
+                className="w-full px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') addLink();
+                  if (e.key === 'Escape') { setShowLinkInput(false); setLinkUrl(''); setLinkText(''); setEditingExistingLink(false); }
+                }}
+              />
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
             <input
               type="url"
               value={linkUrl}
               onChange={(e) => setLinkUrl(e.target.value)}
               placeholder="https://example.com"
-              className="flex-1 px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              className={`flex-1 px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500 ${!editingExistingLink ? 'mb-0' : ''}`}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') addLink();
-                if (e.key === 'Escape') { setShowLinkInput(false); setLinkUrl(''); }
+                if (e.key === 'Escape') { setShowLinkInput(false); setLinkUrl(''); setLinkText(''); setEditingExistingLink(false); }
               }}
               autoFocus
             />
-            <button onClick={addLink} className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">Add</button>
-            <button onClick={() => { setShowLinkInput(false); setLinkUrl(''); }} className="px-5 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium">Cancel</button>
+            {editingExistingLink ? (
+              <>
+                <button onClick={addLink} className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">Update</button>
+                <button onClick={removeLink} className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium">Remove</button>
+              </>
+            ) : (
+              <button onClick={addLink} className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">Add</button>
+            )}
+            <button onClick={() => { setShowLinkInput(false); setLinkUrl(''); setLinkText(''); setEditingExistingLink(false); linkSelectionRef.current = null; }} className="px-5 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium">Cancel</button>
           </div>
+          <p className="mt-2 text-xs text-gray-500">
+            {editingExistingLink ? 'Update the URL or remove the link.' : 'Select text to link, or place cursor to insert a new link with custom text.'} Ctrl+K to open.
+          </p>
+        </div>
+      )}
+
+      {/* Image URL Input */}
+      {showImageUrlInput && (
+        <div className="p-3 border-b border-gray-700 bg-gray-800">
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://example.com/image.jpg"
+              className="flex-1 px-4 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') insertImageFromUrl(imageUrl);
+                if (e.key === 'Escape') { setShowImageUrlInput(false); setImageUrl(''); }
+              }}
+              autoFocus
+            />
+            <button onClick={() => insertImageFromUrl(imageUrl)} className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">Insert</button>
+            <button onClick={() => { setShowImageUrlInput(false); setImageUrl(''); }} className="px-5 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium">Cancel</button>
+          </div>
+          <p className="mt-2 text-xs text-gray-500">Paste an image URL to embed it (no upload).</p>
         </div>
       )}
 
@@ -774,6 +1010,40 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       <div 
         className="min-h-[300px] p-5"
         onClick={() => setSelectedBlockKey(null)}
+        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'copy'; }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const files = Array.from(e.dataTransfer.files || []);
+          const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+          const imageFiles = files.filter((f: File) => validTypes.includes(f.type));
+          if (imageFiles.length) {
+            (async () => {
+              setIsUploading(true);
+              setUploadProgress(imageFiles.length > 1 ? `Uploading ${imageFiles.length} images...` : 'Uploading...');
+              try {
+                let state = editorStateRef.current;
+                for (const file of imageFiles) {
+                  if (file.size > 10 * 1024 * 1024) continue;
+                  const result = await uploadToCloudinary(file);
+                  if (result?.url) {
+                    state = insertMediaBlock(state, { src: result.url, type: 'image', publicId: result.publicId });
+                    editorStateRef.current = state;
+                    handleEditorChange(state);
+                  }
+                }
+                setUploadProgress(imageFiles.length > 1 ? `✓ Uploaded ${imageFiles.length} images!` : '✓ Done!');
+                setTimeout(() => setUploadProgress(''), 2000);
+              } catch (err) {
+                console.error('Drop upload failed:', err);
+                setUploadProgress('✗ Upload failed');
+                setTimeout(() => setUploadProgress(''), 5000);
+              } finally {
+                setIsUploading(false);
+              }
+            })();
+          }
+        }}
       >
         <Editor
           ref={editorRef}
@@ -782,12 +1052,44 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           keyBindingFn={keyBindingFn}
           handleKeyCommand={handleKeyCommand}
           blockRendererFn={blockRendererFn}
+          handlePastedFiles={(files: File[] | Iterable<File>) => {
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            const imageFiles = Array.from(files || []).filter((f: File) => validTypes.includes(f.type));
+            if (imageFiles.length) {
+              (async () => {
+                setIsUploading(true);
+                setUploadProgress(imageFiles.length > 1 ? `Pasting ${imageFiles.length} images...` : 'Pasting image...');
+                try {
+                  let state = editorStateRef.current;
+                  for (const file of imageFiles) {
+                    if (file.size > 10 * 1024 * 1024) continue;
+                    const result = await uploadToCloudinary(file);
+                    if (result?.url) {
+                      state = insertMediaBlock(state, { src: result.url, type: 'image', publicId: result.publicId });
+                      editorStateRef.current = state;
+                      handleEditorChange(state);
+                    }
+                  }
+                  setUploadProgress(imageFiles.length > 1 ? `✓ Pasted ${imageFiles.length} images!` : '✓ Pasted!');
+                  setTimeout(() => setUploadProgress(''), 2000);
+                } catch (err) {
+                  console.error('Paste upload failed:', err);
+                  setUploadProgress('✗ Paste failed');
+                  setTimeout(() => setUploadProgress(''), 5000);
+                } finally {
+                  setIsUploading(false);
+                }
+              })();
+              return 'handled';
+            }
+            return 'not-handled';
+          }}
           placeholder={placeholder}
           spellCheck={true}
         />
       </div>
 
-      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" onChange={handleImageUpload} className="hidden" />
+      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple onChange={handleImageUpload} className="hidden" />
       <input ref={videoInputRef} type="file" accept="video/mp4,video/webm,video/ogg" onChange={handleVideoUpload} className="hidden" />
 
       <style jsx global>{`
